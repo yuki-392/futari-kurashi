@@ -84,3 +84,5 @@ GitHub Actionsは`npm ci`と`npm run check`を実行します。PWAの実ブラ�
 ## 世帯機能のローカル検証
 
 JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・世帯のEmulatorテストを実行します。`test:rules`・`test:household`で個別検証も可能です。Authテストも世帯表示に進むためAuth＋Firestore Emulatorを使用します。通常のクラウド設定で試す前に、[世帯検証手順](./docs/household-verification.md)を参照してください。今回、Firestoreのクラウド準備・Rules公開・Hosting公開は行っていません。
+
+世帯権限は2世帯の隔離・直接改ざん・競合・拒否後の不変性までローカル検証済みです。許可／拒否の仕様と実行方法は[権限表](./docs/firestore-permissions.md)、判断理由は[実装記録0006](./docs/implementation-log/0006-firestore-permissions.md)に記載しています。
