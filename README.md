@@ -69,8 +69,11 @@ docs/                  仕様・設計・手順・開発計画
 
 - [製品仕様](./docs/product-spec.md): 提供いただいた企画・要件の全体
 - [開発計画](./docs/roadmap.md): 実装状況・次の作業
+- [実装記録](./docs/implementation-log/README.md): 各作業の目的・判断理由・検証結果・指摘と対応
 - [設計方針](./docs/architecture.md): アプリ構成・データ・セキュリティ・PWA
 - [Firebaseセットアップ](./docs/firebase-setup.md): Console・環境変数・Emulator・公開
 - [Codex向けガイド](./AGENTS.md): 次回作業時の参照順と開発ルール
 
 GitHub Actionsは`npm ci`と`npm run check`を実行します。ローカルGitは初期化済みですが、GitHub Privateリポジトリの作成・remoteの設定・push・Firebaseへの公開はまだ実施していません。
+
+実装ごとの理由は[実装記録](./docs/implementation-log/README.md)から確認できます。指摘するときは、チャットで「0003のD1について、こう変えたい」のように伝えてください。Codexが対象の記録に指摘・対応・再検証を追記します。
