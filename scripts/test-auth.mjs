@@ -165,7 +165,9 @@ try {
   ).toBeVisible()
   await action('update', { oobCode: await oob('VERIFY_EMAIL') })
   await page.getByRole('button', { name: '確認しました' }).click()
-  await expect(page.getByText('世帯共有は準備中です。')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'ふたりの世帯を設定' }),
+  ).toBeVisible()
   await page.screenshot({
     path: join(tmpdir(), 'futari-auth-signed-in.png'),
     fullPage: true,
@@ -177,7 +179,9 @@ try {
   page = await context.newPage()
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto(url)
-  await expect(page.getByText('世帯共有は準備中です。')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'ふたりの世帯を設定' }),
+  ).toBeVisible()
   await page.getByRole('button', { name: 'ログアウト', exact: true }).click()
   await expect(
     page.getByRole('button', { name: 'ログインする', exact: true }),
@@ -198,7 +202,9 @@ try {
   )
   await page.getByLabel('パスワード', { exact: true }).fill(changed)
   await page.getByRole('button', { name: 'ログインする', exact: true }).click()
-  await expect(page.getByText('世帯共有は準備中です。')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'ふたりの世帯を設定' }),
+  ).toBeVisible()
   assert.deepEqual(errors, [])
   await expect(page.locator('vite-error-overlay')).toHaveCount(0)
   console.log(

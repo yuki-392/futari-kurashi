@@ -21,12 +21,13 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 `VITE_USE_FIREBASE_EMULATORS`は未指定・`false`・`true`のみ受け付けます。誤記を本番への接続として黙って扱わない設計です。設定完了だけではネットワーク接続を行いません。SDKを使う機能から`getFirebaseServices()`を呼び出してください。
 
-## 世帯データの方針（未実装）
+## 世帯データの構成（所属・招待のみローカル実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。以下は設計候補であり確定スキーマではありません。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。家事などのサブコレクションは設計候補であり、未実装です。
 
 ```text
-users/{uid}                         個別プロフィール
+users/{uid}                         本人の所属（プロフィールは未実装）
+householdInvites/{code}              メール指定の招待（24時間・1回限り）
 households/{householdId}             世帯とメンバー（上限2人）
   tasks/{taskId}                     ToDo・家事
   cleaningSchedules/{scheduleId}     掃除の繰り返し設定
@@ -43,13 +44,13 @@ households/{householdId}             世帯とメンバー（上限2人）
 - 月別集計や日付境界はAsia/Tokyoを前提に設計する。
 - 金額は日本円の整数で管理し、負担率と丸め方・端数の帰属を精算機能の実装前に確定する。
 - 繰り返し設定と完了履歴を分離し、2台からの同時操作で履歴・次回タスクを二重生成しない。
-- 招待方法・失効・再利用防止・競合制御は認証/世帯機能の実装時に設計する。
+- 招待は128bit乱数コードと確認済みメールの一致が必要。作成者が発行/取消でき、有効な招待は1件。再発行で旧コードを失効する。
 - 2人という上限はUIだけでなくSecurity Rulesとtransactionを組み合わせて強制する。
 - スキーマ変更では既存データを維持する。エクスポート・復元を後で実装できる形にする。
 
 ## セキュリティ
 
-現在の`firestore.rules`は全アクセス拒否です。公開データベースは作りません。業務データを追加する際、未認証・他世帯の読み書き、メンバー改ざん、3人目の参加を拒否するルールを同時に実装します。Firestore Emulatorと`@firebase/rules-unit-testing`による権限テストをその段階で追加します。
+リポジトリの`firestore.rules`は本人の所属・世帯・招待だけを限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。今回クラウド設定・Rules公開は行っておらず、クラウド側の状態は変更していません。
 
 FirebaseのWebアプリ設定はクライアントに公開される識別情報です。APIキーだけでデータを守る設計にせず、AuthとSecurity Rulesをアクセス制御の根拠にします。管理者用秘密鍵・サービスアカウントはフロントエンドで使用しません。
 
@@ -88,4 +89,20 @@ Firebase Sparkを前提とし、Cloud Functions・Cloud Storage・自動銀行�
 
 登録後の確認メール送信だけが失敗してもアカウントを作り直さず、再送で回復します。「確認しました」でreloadとIDトークンの強制更新を行います。再設定メールは登録の有無を断定しない案内を表示します。確認・再設定ページはFirebase標準を使用し、実メールを使う操作はユーザー本人が行います。
 
-メール確認前の制御はUI上の認証ゲートです。Firestoreは全拒否のままで、世帯のSecurity Rulesは次の項目で実装します。Firebaseクラウド設定と公開・実機検証の進捗は[実装記録0004](./implementation-log/0004-email-auth.md)を参照してください。
+メール確認前の制御はUI上の認証ゲートです。クラウドのFirestore設定は未変更です。世帯のSecurity Rulesは項目3でローカル実装・検証しています。Firebaseクラウド設定と公開・実機検証の進捗は[実装記録0004](./implementation-log/0004-email-auth.md)を参照してください。
+
+## 世帯と招待（Phase 1・項目3）
+
+`src/features/household/`に状態・サービス・UI・テストを配置しました。認証済みの表示からUIDをkeyにProviderを生成し、メール未確認・ログアウト・別アカウントへの切り替えで破棄します。所属を購読し、所属があれば世帯も購読します。書き込み未確定のsnapshotは表示せず、保存確定時のmetadata更新を受け取ります。
+
+| 文書                    | フィールド                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| users/{uid}             | householdId、createdAt                                                                                        |
+| households/{id}         | name、ownerId、memberIds（作成者→参加者の順・最大2人）、activeInviteId（未発行/取消/参加後はnull）、createdAt |
+| householdInvites/{code} | householdId、householdName、createdBy、targetEmail、createdAt、usedBy、usedAt（未使用の2項目はnull）          |
+
+作成時は世帯と本人所属、発行時は招待と有効招待ID、参加時は招待消費・本人所属・世帯更新をtransactionで一括処理します。getAfterで更新後の整合性を強制し、部分的な書き込みを拒否します。所属文書は作成後の変更・削除を許可しません。参加者は招待を読むだけで世帯名を確認でき、参加前の世帯自体の読み取りは許可しません。招待確認もサーバー読み取りtransactionを使い、参加時には再検証します。
+
+メールはtrim/lowercaseで比較し、UIDはAuthの値を使います。作成者以外は招待を変更できず、対象者だけが未使用かつ有効な招待を消費できます。全コレクションの一覧取得は拒否。期限はcreatedAt（serverTimestamp）から24時間未満をrequest.timeで判定します。旧・取消済み・使用済みの招待文書は残りますが使用できません。定期削除やTTL課金機能は追加していません。
+
+SDKの診断警告に文書パス＝コードが含まれるため、アプリのFirestoreログはsilentとし、失敗はUIで案内します。個人情報や招待はService Workerのキャッシュ対象にしません。詳細と検証は[実装記録0005](./implementation-log/0005-household.md)・[世帯検証手順](./household-verification.md)を参照してください。

@@ -12,7 +12,7 @@ npm run test:auth
 npm run test:pwa
 ```
 
-`test:auth`はAuth Emulatorだけを起動し、架空プロジェクト`demo-futari-kurashi`と`example.test`の架空アカウントを使用します。Firestore EmulatorとJavaは不要です。Emulatorの9099番ポート、Viteの5176番ポートを使用します。別のEmulatorが動いている場合は終了してから実行してください。
+`test:auth`は世帯画面への認証ゲートも確認するため、AuthとFirestore Emulatorを起動し、架空プロジェクト`demo-futari-kurashi`と`example.test`の架空アカウントを使用します。項目3からJDK 21が必要です。Authは9099番、Firestoreは8080番、Viteは5176番ポートを使用します。環境設定は[世帯検証手順](./household-verification.md)を参照してください。別のEmulatorが動いている場合は終了してから実行してください。
 
 登録・未確認メールの制御・メール確認・トークン更新・ブラウザープロファイルを維持した終了/再起動・ログアウト・再設定・旧パスワードの拒否・新パスワードでのログインを確認します。実メールは送りません。テスト用ブラウザーのプロファイルは一時フォルダに作成し、終了時に削除します。Emulatorに永続データのexportは指定しません。
 

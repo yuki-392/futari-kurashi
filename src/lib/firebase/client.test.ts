@@ -3,6 +3,7 @@ const mock = vi.hoisted(() => ({
   app: { name: 'futari-kurashi' },
   auth: { languageCode: '' },
   db: {},
+  logLevel: vi.fn(),
   getAuth: vi.fn(),
   getFirestore: vi.fn(),
   connectAuth: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock('firebase/auth', () => ({
 }))
 vi.mock('firebase/firestore', () => ({
   getFirestore: mock.getFirestore,
+  setLogLevel: mock.logLevel,
   connectFirestoreEmulator: mock.connectFirestore,
 }))
 beforeEach(() => {
@@ -49,6 +51,7 @@ it('既存サービスAPIでもAuthとFirestore初期化を共有する', async 
   expect(a.db).toBe(mock.db)
   expect(mock.getAuth).toHaveBeenCalledOnce()
   expect(mock.connectFirestore).toHaveBeenCalledOnce()
+  expect(mock.logLevel).toHaveBeenCalledWith('silent')
 })
 it('初期化が失敗しても次の呼び出しで回復できる', async () => {
   mock.getAuth.mockImplementationOnce(() => {

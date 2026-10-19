@@ -10,7 +10,7 @@
 4. Cloud Firestoreのデータベースを作成。**本番モード（Locked mode）**を選びます。データの保存先リージョンは作成前に確認してください。
 5. Authenticationの承認済みドメインを確認し、開発に必要なら`localhost`を追加。公開後は利用するHostingドメインも確認します。
 
-まだログインUI・世帯データ機能はないため、ここまで設定しても実データの読み書きは始まりません。
+認証は実機確認済みです。世帯機能はローカルEmulatorでの検証段階で、Firestoreのクラウド作成・世帯Rules公開は今回行いません。
 
 ## 2. 環境変数
 
@@ -54,7 +54,7 @@ Hostingは`dist/`を配信し、SPAのURLを`index.html`へrewriteします。�
 
 ## 4. ローカルEmulator（任意）
 
-Firestore Emulatorには**Java 21以上**が必要です。Javaはアプリの通常開発・本番ビルドには不要です。この作業環境にはJava Runtimeがないため、今回Emulator本体の起動は未検証です。
+Firestore Emulatorには**Java 21以上**が必要です。Javaはアプリの通常開発・本番ビルドには不要です。この作業環境では`.tools.local/`にJDK 21を用意し、世帯のEmulatorテストに使用します。システムJavaは変更していません。[世帯検証手順](./household-verification.md)に沿って実行してください。
 
 ターミナル1:
 
@@ -75,7 +75,7 @@ npm run dev:emulator
 - Authentication: `127.0.0.1:9099` / Firestore: `127.0.0.1:8080`
 - Hosting: [http://127.0.0.1:5000](http://127.0.0.1:5000)（先にビルドした内容）
 - Vite開発サーバーは通常`http://localhost:5173`。将来SDKを利用する機能は`getFirebaseServices()`経由でEmulatorに接続します。
-- ルールが全拒否のため、認証したユーザーもFirestoreの読み書きはできません。
+- ローカルのルールは確認済みユーザーの世帯・所属・招待を限定許可します。業務データのパスは全拒否です。クラウドには未反映です。
 - EmulatorはPC自身のloopbackで待ち受けます。この設定ではiPhoneからEmulatorには接続できません。
 - データのexport/import指定はしていません。終了後のデータ保持を前提にしないでください。
 

@@ -18,10 +18,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:pwa": "node scripts/test-pwa.mjs",
-    "test:auth": "firebase emulators:exec --only auth --project demo-futari-kurashi \"node scripts/test-auth.mjs\"",
+    "test:auth": "node scripts/run-emulators.mjs auth",
     "check": "npm run lint && npm run format:check && npm run test && npm run build",
     "firebase": "firebase",
-    "emulators": "firebase emulators:start --project demo-futari-kurashi --only auth,firestore,hosting"
+    "emulators": "firebase emulators:start --project demo-futari-kurashi --only auth,firestore,hosting",
+    "test:rules": "node scripts/run-emulators.mjs rules",
+    "test:household": "node scripts/run-emulators.mjs household",
+    "test:integration": "node scripts/run-emulators.mjs all"
   },
   "dependencies": {
     "firebase": "13.0.0",
@@ -30,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@firebase/rules-unit-testing": "6.0.0",
     "@playwright/test": "1.64.1",
     "@tailwindcss/vite": "4.3.3",
     "@testing-library/react": "16.3.3",

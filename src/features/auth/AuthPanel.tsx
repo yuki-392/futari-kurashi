@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { useAuth } from './context'
 import { authMessage, validateEmail, validateRegistration } from './validation'
-export function AuthPanel() {
+export function AuthPanel({ children }: { children?: ReactNode }) {
   const auth = useAuth()
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login')
   const [email, setEmail] = useState('')
@@ -107,7 +107,7 @@ export function AuthPanel() {
           </h2>
           <p className="my-4 break-all">{auth.user?.email}</p>
           {auth.status === 'signedIn' ? (
-            <p>世帯共有は準備中です。</p>
+            <>{children ?? <p>世帯共有は準備中です。</p>}</>
           ) : (
             <>
               <p className="my-4 text-sm leading-7">

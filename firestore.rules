@@ -1,9 +1,126 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 世帯単位のルールと権限テストを実装するまで全アクセスを拒否。
-    match /{document=**} {
-      allow read, write: if false;
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email is string;
     }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function homePath(id) { return /databases/$(database)/documents/households/$(id); }
+    function invitePath(id) { return /databases/$(database)/documents/householdInvites/$(id); }
+    function ownMembership(id) {
+      return getAfter(userPath(request.auth.uid)).data.householdId == id;
+    }
+    function freshMembership(id) {
+      return !exists(userPath(request.auth.uid)) && ownMembership(id);
+    }
+    function validHome(data) {
+      return data.keys().hasOnly(['name','ownerId','memberIds','activeInviteId','createdAt'])
+        && data.name is string && data.name == data.name.trim()
+        && data.name.size() >= 1 && data.name.size() <= 40
+        && data.ownerId is string && data.memberIds is list
+        && data.memberIds.size() >= 1 && data.memberIds.size() <= 2
+        && data.memberIds.toSet().size() == data.memberIds.size()
+        && data.memberIds[0] == data.ownerId
+        && (data.activeInviteId == null || (data.activeInviteId is string && data.activeInviteId.matches('^[a-f0-9]{32}$')))
+        && data.createdAt is timestamp;
+    }
+    function usableInvite(data) {
+      return data.usedBy == null && data.usedAt == null
+        && request.time < data.createdAt + duration.value(24,'h');
+    }
+    function recipient(data) {
+      return data.targetEmail == request.auth.token.email.lower();
+    }
+    function activeInvite(id,data) {
+      let home = get(homePath(data.householdId)).data;
+      return home.activeInviteId == id && home.memberIds.size() == 1;
+    }
+    function consumedWithHome(id,data) {
+      let afterHome = getAfter(homePath(data.householdId)).data;
+      return afterHome.activeInviteId == null
+        && afterHome.memberIds == [data.createdBy,request.auth.uid]
+        && freshMembership(data.householdId);
+    }
+    match /users/{uid} {
+      allow get: if verified() && uid == request.auth.uid;
+      allow create: if verified() && uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['householdId','createdAt'])
+        && request.resource.data.householdId is string
+        && request.resource.data.createdAt == request.time
+        && request.auth.uid in getAfter(homePath(request.resource.data.householdId)).data.memberIds;
+      allow list, update, delete: if false;
+    }
+    match /households/{id} {
+      allow get: if verified() && request.auth.uid in resource.data.memberIds;
+      allow list, delete: if false;
+      allow create: if verified() && validHome(request.resource.data)
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.memberIds == [request.auth.uid]
+        && request.resource.data.activeInviteId == null
+        && request.resource.data.createdAt == request.time
+        && freshMembership(id);
+      function managesInvite() {
+        let data = request.resource.data;
+        return request.auth.uid == resource.data.ownerId
+          && resource.data.memberIds.size() == 1
+          && data.diff(resource.data).affectedKeys().hasOnly(['activeInviteId'])
+          && (data.activeInviteId == null || newInvite(data.activeInviteId));
+      }
+      function newInvite(code) {
+        let invitation = getAfter(invitePath(code)).data;
+        return !exists(invitePath(code))
+          && invitation.householdId == id
+          && invitation.createdBy == request.auth.uid
+          && invitation.createdAt == request.time;
+      }
+      function joins() {
+        let before = get(invitePath(resource.data.activeInviteId)).data;
+        let after = getAfter(invitePath(resource.data.activeInviteId)).data;
+        return resource.data.memberIds.size() == 1
+          && !(request.auth.uid in resource.data.memberIds)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds','activeInviteId'])
+          && request.resource.data.memberIds == [resource.data.ownerId,request.auth.uid]
+          && request.resource.data.activeInviteId == null
+          && before.householdId == id && before.createdBy == resource.data.ownerId
+          && usableInvite(before) && recipient(before)
+          && after.usedBy == request.auth.uid && after.usedAt == request.time
+          && freshMembership(id);
+      }
+      allow update: if verified() && validHome(request.resource.data)
+        && (managesInvite() || joins());
+    }
+    match /householdInvites/{code} {
+      allow get: if verified() && (
+        (request.auth.uid == resource.data.createdBy
+          && request.auth.uid in get(homePath(resource.data.householdId)).data.memberIds)
+        || (recipient(resource.data) && usableInvite(resource.data) && activeInvite(code,resource.data))
+      );
+      allow list, delete: if false;
+      allow create: if verified()
+        && code.matches('^[a-f0-9]{32}$')
+        && request.resource.data.keys().hasOnly(['householdId','householdName','createdBy','targetEmail','createdAt','usedBy','usedAt'])
+        && request.resource.data.householdId is string
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.targetEmail is string
+        && request.resource.data.targetEmail.size() <= 254
+        && request.resource.data.targetEmail.matches('^[^ @]+@[^ @]+[.][^ @]+$')
+        && request.resource.data.targetEmail == request.resource.data.targetEmail.lower()
+        && request.resource.data.targetEmail != request.auth.token.email.lower()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.usedBy == null && request.resource.data.usedAt == null
+        && get(homePath(request.resource.data.householdId)).data.ownerId == request.auth.uid
+        && get(homePath(request.resource.data.householdId)).data.memberIds == [request.auth.uid]
+        && request.resource.data.householdName == get(homePath(request.resource.data.householdId)).data.name
+        && getAfter(homePath(request.resource.data.householdId)).data.activeInviteId == code;
+      allow update: if verified() && recipient(resource.data)
+        && usableInvite(resource.data) && activeInvite(code,resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy','usedAt'])
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.usedAt == request.time
+        && consumedWithHome(code,resource.data);
+    }
+    // 未実装の業務データは引き続き全拒否。
+    match /{document=**} { allow read, write: if false; }
   }
 }

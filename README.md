@@ -2,7 +2,7 @@
 
 **家事も、お金も、ふたりで。**
 
-同棲カップル2人向けの生活管理PWAです。Phase 1・項目1のPWA対応は、iPhone 16 / iOS 26.2での実機検証まで完了しました。Phase 1・項目2の認証機能も、実装・自動検証・検証公開・一連の実機確認まで完了しました。世帯共有・各管理機能はこれから実装します。
+同棲カップル2人向けの生活管理PWAです。Phase 1・項目1のPWA対応は、iPhone 16 / iOS 26.2での実機検証まで完了しました。Phase 1・項目2の認証機能も、実装・自動検証・検証公開・一連の実機確認まで完了しました。世帯作成・招待・参加はローカル実装段階です（公開・実機確認は未実施）。家事などの各管理機能はこれから実装します。
 
 ## 開発を始める
 
@@ -80,3 +80,7 @@ docs/                  仕様・設計・手順・開発計画
 GitHub Actionsは`npm ci`と`npm run check`を実行します。PWAの実ブラウザーテストは、別途Chromiumをインストールして`npm run test:pwa`で実行します。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済みです。GitHub Privateリポジトリの作成・remoteの設定・pushは未実施です。Hostingの検証公開状況は[実装記録0003](./docs/implementation-log/0003-pwa-iphone.md)に記録します。
 
 実装ごとの理由は[実装記録](./docs/implementation-log/README.md)から確認できます。指摘するときは、チャットで「0003のD1について、こう変えたい」のように伝えてください。Codexが対象の記録に指摘・対応・再検証を追記します。
+
+## 世帯機能のローカル検証
+
+JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・世帯のEmulatorテストを実行します。`test:rules`・`test:household`で個別検証も可能です。Authテストも世帯表示に進むためAuth＋Firestore Emulatorを使用します。通常のクラウド設定で試す前に、[世帯検証手順](./docs/household-verification.md)を参照してください。今回、Firestoreのクラウド準備・Rules公開・Hosting公開は行っていません。

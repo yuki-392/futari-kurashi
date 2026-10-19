@@ -29,6 +29,8 @@ async function initializeServices() {
     getAuthClient(),
     import('firebase/firestore'),
   ])
+  // SDKの警告に文書パス（招待コード）が含まれるため、エラーはUIで扱う。
+  sdk.setLogLevel('silent')
   const db = sdk.getFirestore(app)
   if (firebaseConfig.status === 'configured' && firebaseConfig.useEmulators)
     sdk.connectFirestoreEmulator(db, '127.0.0.1', 8080)
