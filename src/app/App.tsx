@@ -90,7 +90,7 @@ export default function App() {
         </p>
       </details>
       <footer className="mt-10 text-xs leading-6 text-muted">
-        ふたりの暮らし · 開発準備版
+        ふたりの暮らし · 開発準備版 · {import.meta.env.VITE_APP_BUILD_LABEL}
       </footer>
       <PwaUpdateNotice />
     </main>

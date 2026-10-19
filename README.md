@@ -2,7 +2,7 @@
 
 **家事も、お金も、ふたりで。**
 
-同棲カップル2人向けの生活管理PWAです。現在は環境構築まで完了しており、ログイン・世帯共有・各管理機能はこれから実装します。
+同棲カップル2人向けの生活管理PWAです。Phase 1・項目1のPWA対応は、iPhone 16 / iOS 26.2での実機検証まで完了しました。ログイン・世帯共有・各管理機能はこれから実装します。
 
 ## 開発を始める
 
@@ -40,6 +40,7 @@ Firebase ConsoleのWebアプリ設定を`.env.local`に入力し、開発サー�
 | `npm run format:check`       | 整形チェック                                               |
 | `npm test`                   | Vitestを1回実行                                            |
 | `npm run test:watch`         | テストを監視実行                                           |
+| `npm run test:pwa`           | ChromiumでSW・オフライン・新旧ビルドの更新を検証           |
 | `npm run build`              | 型チェック＋本番ビルド。`dist/`へ出力                      |
 | `npm run preview`            | ビルドしたPWAをローカル確認                                |
 | `npm run check`              | Lint・整形・テスト・本番ビルドをまとめて実行               |
@@ -70,10 +71,11 @@ docs/                  仕様・設計・手順・開発計画
 - [製品仕様](./docs/product-spec.md): 提供いただいた企画・要件の全体
 - [開発計画](./docs/roadmap.md): 実装状況・次の作業
 - [実装記録](./docs/implementation-log/README.md): 各作業の目的・判断理由・検証結果・指摘と対応
+- [PWAの検証手順](./docs/pwa-verification.md): PCでの再現・検証用公開・iPhoneでの確認
 - [設計方針](./docs/architecture.md): アプリ構成・データ・セキュリティ・PWA
 - [Firebaseセットアップ](./docs/firebase-setup.md): Console・環境変数・Emulator・公開
 - [Codex向けガイド](./AGENTS.md): 次回作業時の参照順と開発ルール
 
-GitHub Actionsは`npm ci`と`npm run check`を実行します。ローカルGitは初期化済みですが、GitHub Privateリポジトリの作成・remoteの設定・push・Firebaseへの公開はまだ実施していません。
+GitHub Actionsは`npm ci`と`npm run check`を実行します。PWAの実ブラウザーテストは、別途Chromiumをインストールして`npm run test:pwa`で実行します。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済みです。GitHub Privateリポジトリの作成・remoteの設定・pushは未実施です。Hostingの検証公開状況は[実装記録0003](./docs/implementation-log/0003-pwa-iphone.md)に記録します。
 
 実装ごとの理由は[実装記録](./docs/implementation-log/README.md)から確認できます。指摘するときは、チャットで「0003のD1について、こう変えたい」のように伝えてください。Codexが対象の記録に指摘・対応・再検証を追記します。

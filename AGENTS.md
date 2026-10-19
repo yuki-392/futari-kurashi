@@ -51,4 +51,6 @@
 
 ## 作業範囲
 
-環境構築はローカルまで。GitHub Privateリポジトリ・Firebaseプロジェクトは未作成・未接続。公開やリモート変更を実施した場合は実施内容とURLを記録する。
+Phase 1・項目1のPWA検証は完了。iPhone 16 / iOS 26.2でホーム画面追加・再起動・A→B更新・オフライン表示・名前/アイコンをユーザーが確認済み。実装記録0003を参照する。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済み。ユーザーはSparkプラン・Hostingプレビューチャネル`pwa-check`への7日間の検証公開を承認済み。公開時はプロジェクトIDと`--no-authorized-domains`を明示し、URL・期限・ビルド識別子を実装記録に残す。
+
+次はPhase 1・項目2のメール・パスワード認証だが、まだ未着手。各項目で一区切りとし、次の項目には自動で進まない。Authentication・Firestoreのクラウド設定、本番公開は未実施。GitHub Privateリポジトリ・remote・pushは未設定。

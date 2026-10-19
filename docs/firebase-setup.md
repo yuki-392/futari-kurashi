@@ -1,6 +1,6 @@
 # Firebaseセットアップ
 
-ローカルのファイル・依存関係は用意済みです。実際のFirebaseプロジェクトはまだ作成・接続していません。
+専用Firebaseプロジェクト`futari-kurashi-5fcab9`（表示名`Futari Kurashi`）を作成済みです。`.firebaserc`に接続先を設定しています。今回はHostingのみを準備し、Webアプリ登録・Authentication・Firestoreのクラウド設定は今後の対応項目で行います。検証公開は[PWA検証手順](./pwa-verification.md)と[実装記録0003](./implementation-log/0003-pwa-iphone.md)を参照してください。
 
 ## 1. Firebase Console
 
@@ -39,7 +39,7 @@ npm run firebase -- login
 npm run firebase -- use --add
 ```
 
-作成済みの対象プロジェクトを選びます。CLIが作成する`.firebaserc`で接続先を確認してください。初期状態では実在するIDや仮の本番IDを登録していません。
+作成済みの対象プロジェクトを選びます。現在の`.firebaserc`は専用プロジェクトを参照しています。デプロイ時は接続先IDをコマンドでも明示します。
 
 公開する場合:
 
