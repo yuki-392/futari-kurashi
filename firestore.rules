@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 世帯単位のルールと権限テストを実装するまで全アクセスを拒否。
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

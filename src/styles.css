@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-forest: #325b4a;
+  --color-sage: #edf3ed;
+  --color-muted: #62685f;
+  --color-line: #e2e6dd;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', sans-serif;
+}
+
+@layer base {
+  html {
+    background: #f8f9f4;
+    color: #29372d;
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  button,
+  summary {
+    touch-action: manipulation;
+  }
+
+  button {
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  :focus-visible {
+    outline: 3px solid #325b4a;
+    outline-offset: 4px;
+  }
+}
+
+@layer components {
+  .notice {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    left: max(1rem, env(safe-area-inset-left));
+    z-index: 10;
+    max-width: 28rem;
+    margin-inline: auto;
+    padding: 1.25rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: white;
+    box-shadow: 0 8px 36px #29372d1a;
+    font-size: 0.875rem;
+  }
+}
