@@ -1,5 +1,7 @@
 import { PwaUpdateNotice } from '../components/PwaUpdateNotice'
 import { firebaseConfig } from '../lib/firebase/config'
+import { lazy, Suspense } from 'react'
+const AuthSection = lazy(() => import('../features/auth/AuthSection'))
 
 const features = [
   ['家事', '今日のやることを、ふたりで。'],
@@ -46,21 +48,29 @@ export default function App() {
       </section>
 
       <section className="rounded-3xl border border-line bg-white p-6 sm:p-8">
-        <p className="text-xs font-semibold tracking-wider text-forest">
-          はじめの一歩
-        </p>
-        <h2 className="mt-3 text-lg font-bold">
-          暮らしを整える準備をしています
-        </h2>
-        <p className="mt-3 text-sm leading-7 text-muted">
-          開発環境の起動を確認できました。ログインや共有リストなどの機能は、これから順番に追加していきます。
-        </p>
-        <p
-          className="mt-5 rounded-xl bg-sage px-4 py-3 text-sm text-forest"
-          role="status"
-        >
-          {firebaseStatus}
-        </p>
+        {firebaseConfig.status === 'configured' ? (
+          <Suspense fallback={<p role="status">ログインの準備中です…</p>}>
+            <AuthSection />
+          </Suspense>
+        ) : (
+          <>
+            <p className="text-xs font-semibold tracking-wider text-forest">
+              はじめの一歩
+            </p>
+            <h2 className="mt-3 text-lg font-bold">
+              暮らしを整える準備をしています
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-muted">
+              開発環境の起動を確認できました。ログインや共有リストなどの機能は、これから順番に追加していきます。
+            </p>
+            <p
+              className="mt-5 rounded-xl bg-sage px-4 py-3 text-sm text-forest"
+              role="status"
+            >
+              {firebaseStatus}
+            </p>
+          </>
+        )}
       </section>
 
       <section className="mt-9" aria-labelledby="features-title">

@@ -13,7 +13,7 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 - `src/features/<feature>`: 今後の認証・世帯・家事・買い物・片付け・家計・ルール。必要になった段階で追加。
 - `src/lib/firebase`: 環境変数検証と外部サービスのクライアント。
 
-コンポーネントからFirebaseの初期化を繰り返さず、`getFirebaseServices()`で共有します。Auth・Firestore SDKは初回利用時に並列で動的importするため、未使用の確認画面には含まれません。利用開始後の購読は画面のライフサイクルに合わせて解除します。
+コンポーネントからFirebaseの初期化を繰り返さず、認証は`getFirebaseAuth()`、データ機能は互換APIの`getFirebaseServices()`で共有します。Authは遅延ロードする認証画面のチャンクにまとめ、Firestoreはデータ機能の初回利用まで初期化しません。認証状態の購読はProviderで管理し、アンマウント時に解除します。
 
 ## Firebase設定
 
@@ -81,3 +81,11 @@ Firebase Sparkを前提とし、Cloud Functions・Cloud Storage・自動銀行�
 - [Firebase Webアプリ設定](https://firebase.google.com/docs/web/learn-more)
 - [Security Rulesの基本・Locked mode](https://firebase.google.com/docs/rules/basics)
 - [Vite PWAの更新確認](https://vite-pwa-org.netlify.app/guide/prompt-for-update)
+
+## 認証（Phase 1・項目2）
+
+`src/features/auth/`に画面・Provider・入力検証を配置。初期確認中、未ログイン、未確認メール、ログイン済み、初期化エラーを区別します。Authの永続保存はFirebase SDKのブラウザー既定を使い、パスワードを独自保存しません。Safariとホーム画面アプリの保存領域の共有は前提にしません。
+
+登録後の確認メール送信だけが失敗してもアカウントを作り直さず、再送で回復します。「確認しました」でreloadとIDトークンの強制更新を行います。再設定メールは登録の有無を断定しない案内を表示します。確認・再設定ページはFirebase標準を使用し、実メールを使う操作はユーザー本人が行います。
+
+メール確認前の制御はUI上の認証ゲートです。Firestoreは全拒否のままで、世帯のSecurity Rulesは次の項目で実装します。Firebaseクラウド設定と公開・実機検証の進捗は[実装記録0004](./implementation-log/0004-email-auth.md)を参照してください。

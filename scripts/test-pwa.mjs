@@ -56,7 +56,14 @@ try {
         join(temp, label),
       ],
       {
-        env: { ...process.env, VITE_APP_BUILD_LABEL: `pwa-check-${label}` },
+        env: {
+          ...process.env,
+          VITE_APP_BUILD_LABEL: `pwa-check-${label}`,
+          VITE_FIREBASE_API_KEY: '',
+          VITE_FIREBASE_AUTH_DOMAIN: '',
+          VITE_FIREBASE_PROJECT_ID: '',
+          VITE_FIREBASE_APP_ID: '',
+        },
         encoding: 'utf8',
       },
     )

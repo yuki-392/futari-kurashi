@@ -2,7 +2,7 @@
 
 **家事も、お金も、ふたりで。**
 
-同棲カップル2人向けの生活管理PWAです。Phase 1・項目1のPWA対応は、iPhone 16 / iOS 26.2での実機検証まで完了しました。ログイン・世帯共有・各管理機能はこれから実装します。
+同棲カップル2人向けの生活管理PWAです。Phase 1・項目1のPWA対応は、iPhone 16 / iOS 26.2での実機検証まで完了しました。Phase 1・項目2の認証機能も、実装・自動検証・検証公開・一連の実機確認まで完了しました。世帯共有・各管理機能はこれから実装します。
 
 ## 開発を始める
 
@@ -71,6 +71,7 @@ docs/                  仕様・設計・手順・開発計画
 - [製品仕様](./docs/product-spec.md): 提供いただいた企画・要件の全体
 - [開発計画](./docs/roadmap.md): 実装状況・次の作業
 - [実装記録](./docs/implementation-log/README.md): 各作業の目的・判断理由・検証結果・指摘と対応
+- [認証の検証手順](./docs/auth-verification.md): Auth Emulator・メール確認・実機の認証維持と再設定
 - [PWAの検証手順](./docs/pwa-verification.md): PCでの再現・検証用公開・iPhoneでの確認
 - [設計方針](./docs/architecture.md): アプリ構成・データ・セキュリティ・PWA
 - [Firebaseセットアップ](./docs/firebase-setup.md): Console・環境変数・Emulator・公開

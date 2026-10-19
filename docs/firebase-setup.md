@@ -1,6 +1,6 @@
 # Firebaseセットアップ
 
-専用Firebaseプロジェクト`futari-kurashi-5fcab9`（表示名`Futari Kurashi`）を作成済みです。`.firebaserc`に接続先を設定しています。今回はHostingのみを準備し、Webアプリ登録・Authentication・Firestoreのクラウド設定は今後の対応項目で行います。検証公開は[PWA検証手順](./pwa-verification.md)と[実装記録0003](./implementation-log/0003-pwa-iphone.md)を参照してください。
+専用Firebaseプロジェクト`futari-kurashi-5fcab9`（表示名`Futari Kurashi`）を作成済みです。`.firebaserc`に接続先を設定しています。Webアプリ`Futari Kurashi Web`も登録済みで、`.env.local`に公開設定を用意しました。Authenticationを初期化し、メール/パスワード、最低12文字の必須ポリシー、列挙保護、検証用承認済みドメインを設定済みです。詳細は[認証の検証手順](./auth-verification.md)と[記録0004](./implementation-log/0004-email-auth.md)を参照してください。Firestoreのクラウド設定は未実施です。検証公開は[PWA検証手順](./pwa-verification.md)と[実装記録0003](./implementation-log/0003-pwa-iphone.md)を参照してください。
 
 ## 1. Firebase Console
 
