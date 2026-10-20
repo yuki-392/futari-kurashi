@@ -105,3 +105,17 @@ vi.mock('../features/recurring-tasks/service', () => ({
   },
   watchUndoTargets: () => () => {},
 }))
+
+vi.mock('../features/shopping/service', () => ({
+  watchShopping: (
+    _id: unknown,
+    _q: unknown,
+    next: (items: never[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return vi.fn()
+  },
+  createShopping: vi.fn(),
+  changeShopping: vi.fn(),
+  removeShopping: vi.fn(),
+}))

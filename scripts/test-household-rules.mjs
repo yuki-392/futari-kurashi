@@ -131,7 +131,6 @@ const principals = {
 const supportedCollections = ['users', 'households', 'householdInvites']
 const unsupportedCollections = [
   'cleaningSchedules',
-  'shoppingItems',
   'declutterItems',
   'expenses',
   'incomes',

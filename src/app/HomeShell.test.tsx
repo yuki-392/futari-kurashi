@@ -90,7 +90,7 @@ it('直接アクセス、画面変更、履歴イベント、不明な画面と�
   history.replaceState(null, '', '#/shopping')
   render(wrap(<HomeShell />))
   expect(screen.getByRole('heading', { name: '買い物' })).toBeTruthy()
-  expect(screen.getByRole('status').textContent).toContain('準備中')
+  expect(screen.getByLabelText('商品名')).toBeTruthy()
   await route('#/finances')
   expect(screen.getByText(/Phase 2/)).toBeTruthy()
   expect(document.activeElement).toBe(
@@ -214,4 +214,18 @@ vi.mock('../features/recurring-tasks/service', () => ({
     return () => {}
   },
   watchUndoTargets: () => () => {},
+}))
+
+vi.mock('../features/shopping/service', () => ({
+  watchShopping: (
+    _id: unknown,
+    _q: unknown,
+    next: (items: never[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return vi.fn()
+  },
+  createShopping: vi.fn(),
+  changeShopping: vi.fn(),
+  removeShopping: vi.fn(),
 }))

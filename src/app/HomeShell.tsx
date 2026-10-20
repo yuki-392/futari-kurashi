@@ -1,3 +1,4 @@
+import { ShoppingPanel } from '../features/shopping/ShoppingPanel'
 import { useEffect, useRef } from 'react'
 import { ChoresPanel } from '../features/recurring-tasks/ChoresPanel'
 import { HomePanel } from '../features/home/HomePanel'
@@ -25,6 +26,8 @@ export function HomeShell() {
         <HomePanel />
       ) : page.id === 'chores' ? (
         <ChoresPanel />
+      ) : page.id === 'shopping' ? (
+        <ShoppingPanel />
       ) : page.id === 'settings' ? (
         <>
           <HouseholdPanel />

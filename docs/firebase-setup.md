@@ -123,3 +123,9 @@ VITE_USE_FIREBASE_EMULATORS=false、識別子recurring-checkで既存[pwa-check]
 既存の繰り返し定義と履歴を拡張し、Rulesを反映・ソース完全一致を確認済み。反映前の参照/ソースはGit対象外の.tools.local/rules-backups/0011-beforeへ保存。active/taskType/nextDueDateとactive/taskType/place/nextDueDateの昇順COLLECTIONインデックスを2件追加しREADYを確認。既存3件・fieldOverrides=[]を維持。旧文書の一括移行や削除はせず、旧定義の完了でも新サービスは履歴へ一般/場所なし/固定を明示保存する。
 
 Emulator無効・識別子cleaning-checkで既存[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)を7日間更新。期限2026-10-27 14:25（日本時間）、Hosting 5edbb93c7bacfc70。公開時はプロジェクトIDと--no-authorized-domainsを明示。Spark/請求先未接続を確認し、本番Hosting/既存データ/Auth設定は維持。プレビュー期限後もFirestore/Rules/データは残る。[記録0011](./implementation-log/0011-cleaning.md)と[確認手順](./cleaning-verification.md)を参照。2026-10-20にiPhone＋Macの①〜⑤を本人確認し項目8B完了。
+
+## 項目9：共有買い物リスト
+
+shoppingItemsの専用Rulesを反映し、ローカルと完全一致を読み戻し確認。反映前ソース/参照はGit対象外の.tools.local/rules-backups/0012-beforeへ保存。購入状態/優先度/作成日時、購入状態/更新日時、および各カテゴリ付きの4クエリ形状のCOLLECTIONインデックスを追加しREADY確認。既存5件、fieldOverrides=[]を維持し、データ削除・一括移行は行わない。
+
+Emulator無効・識別子shopping-checkで既存[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)を7日間更新。期限2026-10-27 15:10（日本時間）、Hosting 933f6555f2ffcf0c。公開コマンドにはプロジェクトIDと--no-authorized-domainsを明示。Spark/請求先未接続を確認し、Auth設定・本番Hosting・既存データを保持。プレビュー期限後もFirestore/Rules/データは残る。[記録0012](./implementation-log/0012-shopping.md)と[確認手順](./shopping-verification.md)を参照。2026-10-20にiPhone＋Macの①〜⑤を本人確認し項目9完了。

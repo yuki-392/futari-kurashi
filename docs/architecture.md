@@ -23,7 +23,7 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 ## 世帯データの構成（所属・招待・ToDoを実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。それ以外は設計候補・未実装です。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9で実装し、それ以外は設計候補・未実装です。
 
 ```text
 users/{uid}                         本人の所属（プロフィールは未実装）
@@ -51,7 +51,7 @@ households/{householdId}             世帯とメンバー（上限2人）
 
 ## セキュリティ
 
-リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDo・繰り返し定義と履歴を限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
+リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDo・繰り返し定義と履歴・買い物を限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
 
 FirebaseのWebアプリ設定はクライアントに公開される識別情報です。APIキーだけでデータを守る設計にせず、AuthとSecurity Rulesをアクセス制御の根拠にします。管理者用秘密鍵・サービスアカウントはフロントエンドで使用しません。
 
@@ -155,3 +155,11 @@ src/features/recurring-tasksに周期計算・サービス・購読・フォー�
 完了は現在担当以外へ交代し、実行者とは独立。交代時はtransactionで世帯メンバーも読み、2人・現在担当1人を確認する。定義更新・履歴作成・次回予定・担当交代をまとめ、取消では履歴の担当と予定を戻す。Rulesでも同じ交代先と原子性を強制する。追加項目を消す旧版保存や交代しない旧版完了は拒否される。固定担当の既存データも通常ToDoも維持する。
 
 src/features/cleaningの今日/今週画面は、稼働中の掃除かつnextDueDate<=対象末日を取得し、場所を指定した場合はその完全一致もサーバー条件へ含める。100件+1で追加表示を判定し、未取得分の総数を表示しない。今週は日本時間の月〜日。現在の未完了1件だけを操作でき、持ち越しを今日完了した想定で、残りの週内の周期・交代担当を参考表示する。未来文書や未実施履歴は生成しない。日付変更・前面復帰で期間を更新し、入力は保つ。場所の管理用コレクションや定義削除は追加しない。[記録0011](./implementation-log/0011-cleaning.md)と[確認手順](./cleaning-verification.md)を参照。
+
+## 共有買い物リスト（Phase 1・項目9）
+
+src/features/shoppingに検証・サービス・購読・フォーム/一覧/ホームをまとめ、households/{hid}/shoppingItems/{id}へ保存する。title、category（food/daily/furniture/appliances/other）、quantity（正規化した正の10進文字列、小数3桁・最大999999.999）、unit（トリム済み0〜10文字）、budget（整数円0〜999999999/null）、assigneeIds（重複なし世帯UID配列0〜2）、priority（低1/中2/高3）、purchased、version、createdAt/createdBy/updatedAt/updatedByを持つ。予算は項目全体の見積もりで、数量倍や家計の実支出への自動登録はしない。
+
+新規は未購入/版1/サーバー監査時刻、編集/購入状態変更/削除は画面のversionをtransactionの最新読取と照合し、古い版は入力を残して拒否する。削除は完全削除で確認操作を必要とするが、Rulesでは所属による権限を検証し、古い版の削除防止はサービス側（通常ToDoと同様）。履歴/復元は今回追加しない。
+
+未購入はpurchased=false・priority降順・createdAt降順、購入済みはpurchased=true・updatedAt降順。必要に応じカテゴリ完全一致を加え、4形状のCOLLECTION複合インデックスを用意する。一覧100件+1、ホーム5件+1でmoreを判定。クライアント側でカテゴリを間引かず、正確な総数や総予算を推測しない。ホームは購入操作と買い物画面への入口を表示する。購読は画面と認証/世帯変更で解除し、キャッシュ由来/保留中snapshotは表示しない。永続オフラインキャッシュは追加しない。[記録0012](./implementation-log/0012-shopping.md)と[確認手順](./shopping-verification.md)を参照。

@@ -89,7 +89,7 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 
 ## iPhone＋PCでの共有確認
 
-[共有確認手順](./docs/realtime-sharing-verification.md)に沿って進めます。共有確認は完了済みで、同じURLは現在cleaning-checkに更新されています（2026-10-27 14:25、日本時間まで有効）。世帯を作るのはAだけ、Bは招待から参加します。プレビュー期限後もデータは保持します。実施した設定と公開情報は[記録0007](./docs/implementation-log/0007-realtime-sharing.md)に残しています。
+[共有確認手順](./docs/realtime-sharing-verification.md)に沿って進めます。共有確認は完了済みで、同じURLは現在shopping-checkに更新されています（2026-10-27 15:10、日本時間まで有効）。世帯を作るのはAだけ、Bは招待から参加します。プレビュー期限後もデータは保持します。実施した設定と公開情報は[記録0007](./docs/implementation-log/0007-realtime-sharing.md)に残しています。
 
 ## ホームと6画面の操作
 
@@ -106,3 +106,7 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 ## 掃除スケジュールと担当交代
 
 家事→掃除で今日/今週と場所別に確認できます。繰り返し家事の場所を設定すると掃除になり、2人世帯・担当1人では完了ごとの交代も選べます。直近取消で予定と担当を復元し、週間の未来分は参考予定として表示します。`npm run test:cleaning`で新しい権限とブラウザーフローを確認できます。cleaning-checkを既存pwa-checkへ検証公開し、2026-10-20にiPhone＋Macの①〜⑤を本人確認済みで項目8Bは完了です。期限2026-10-27 14:25（日本時間）。[確認手順](./docs/cleaning-verification.md)と[記録0011](./docs/implementation-log/0011-cleaning.md)を参照してください。
+
+## 共有買い物リスト
+
+買い物画面で商品・固定カテゴリ・数量/単位・項目全体の予算・担当・優先度を管理し、購入済み/解除と確認付き削除ができます。未購入は高優先度/新規順、購入済みは更新順。ホームは未購入最大5件と追加分の案内を表示します。`npm run test:shopping`で新しいRulesと2ブラウザーフローを検証できます。shopping-checkを既存pwa-checkへ検証公開し、2026-10-20にiPhone＋Macの①〜⑤を本人確認済みで項目9は完了です。期限2026-10-27 15:10（日本時間）。[確認手順](./docs/shopping-verification.md)と[記録0012](./docs/implementation-log/0012-shopping.md)を参照してください。定期購入品と家計連携は別項目です。
