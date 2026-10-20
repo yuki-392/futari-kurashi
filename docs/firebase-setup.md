@@ -1,6 +1,6 @@
 # Firebaseセットアップ
 
-専用Firebaseプロジェクト`futari-kurashi-5fcab9`（表示名`Futari Kurashi`）を作成済みです。`.firebaserc`に接続先を設定しています。Webアプリ`Futari Kurashi Web`も登録済みで、`.env.local`に公開設定を用意しました。Authenticationを初期化し、メール/パスワード、最低12文字の必須ポリシー、列挙保護、検証用承認済みドメインを設定済みです。詳細は[認証の検証手順](./auth-verification.md)と[記録0004](./implementation-log/0004-email-auth.md)を参照してください。Firestoreのクラウド設定は未実施です。検証公開は[PWA検証手順](./pwa-verification.md)と[実装記録0003](./implementation-log/0003-pwa-iphone.md)を参照してください。
+専用Firebaseプロジェクト`futari-kurashi-5fcab9`（表示名`Futari Kurashi`）を作成済みです。`.firebaserc`に接続先を設定しています。Webアプリ`Futari Kurashi Web`も登録済みで、`.env.local`に公開設定を用意しました。Authenticationを初期化し、メール/パスワード、最低12文字の必須ポリシー、列挙保護、検証用承認済みドメインを設定済みです。詳細は[認証の検証手順](./auth-verification.md)と[記録0004](./implementation-log/0004-email-auth.md)を参照してください。項目5でFirestoreを東京に作成し、テスト済みRulesを反映しました。2026-10-20に[iPhone＋PC・テスト用2アカウントの共有確認](./realtime-sharing-verification.md)まで本人確認済みです。検証公開は[PWA検証手順](./pwa-verification.md)と[実装記録0003](./implementation-log/0003-pwa-iphone.md)を参照してください。
 
 ## 1. Firebase Console
 
@@ -10,7 +10,7 @@
 4. Cloud Firestoreのデータベースを作成。**本番モード（Locked mode）**を選びます。データの保存先リージョンは作成前に確認してください。
 5. Authenticationの承認済みドメインを確認し、開発に必要なら`localhost`を追加。公開後は利用するHostingドメインも確認します。
 
-認証は実機確認済みです。世帯機能はローカルEmulatorでの検証段階で、Firestoreのクラウド作成・世帯Rules公開は今回行いません。
+認証は実機確認済みです。世帯機能はクラウド設定と検証用公開まで完了し、iPhone＋PC・テスト用2アカウントでの本人確認も完了しました。Firestoreは(default) / Standard / Native / asia-northeast1 / 無料枠対象 / 削除保護有効 / PITR無効です。課金先は未接続のままです。
 
 ## 2. 環境変数
 
@@ -75,7 +75,7 @@ npm run dev:emulator
 - Authentication: `127.0.0.1:9099` / Firestore: `127.0.0.1:8080`
 - Hosting: [http://127.0.0.1:5000](http://127.0.0.1:5000)（先にビルドした内容）
 - Vite開発サーバーは通常`http://localhost:5173`。将来SDKを利用する機能は`getFirebaseServices()`経由でEmulatorに接続します。
-- ローカルのルールは確認済みユーザーの世帯・所属・招待を限定許可します。業務データのパスは全拒否です。クラウドには未反映です。
+- ローカルのルールは確認済みユーザーの世帯・所属・招待を限定許可します。業務データのパスは全拒否です。項目5で同じRulesをクラウドにも反映済みです。
 - EmulatorはPC自身のloopbackで待ち受けます。この設定ではiPhoneからEmulatorには接続できません。
 - データのexport/import指定はしていません。終了後のデータ保持を前提にしないでください。
 
@@ -95,3 +95,9 @@ npm run dev:emulator
 - [ローカルEmulatorのインストール](https://firebase.google.com/docs/emulator-suite/install_and_configure)
 - [Firestore Emulator](https://firebase.google.com/docs/emulator-suite/connect_firestore)
 - [Firebaseの料金・無料枠](https://firebase.google.com/pricing)
+
+## 項目5で実施したクラウド反映
+
+Firestore APIを有効化してDB一覧が空であることを再確認した後、東京の(default)を作成しました。テストモードは使っていません。`deploy --only firestore:rules --project futari-kurashi-5fcab9`でRulesを反映し、APIで公開ソースとローカルの完全一致を確認しました。Auth設定・既存アカウント・本番Hostingチャネルは変更していません。
+
+共有版sharing-checkは[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)に2026-10-26 16:43（日本時間）まで公開しました。期限後もFirestore・Rules・アカウント・世帯は保持されます。実施したコマンド、Ruleset ID・ハッシュ・公開バージョンは[記録0007](./implementation-log/0007-realtime-sharing.md)を参照してください。追加の公開やルール変更では、常に影響と対象プロジェクトを確認します。

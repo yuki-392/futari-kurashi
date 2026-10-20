@@ -1,6 +1,6 @@
 # 世帯機能・権限のローカル検証（Phase 1・項目3〜4）
 
-[実装記録0005](./implementation-log/0005-household.md)に判断・検証結果を残します。今回はローカルのみです。クラウドのFirestore作成・Rules公開・Hosting公開・実機確認は行っていません。
+[実装記録0005](./implementation-log/0005-household.md)に判断・検証結果を残します。この文書は項目3〜4のローカル検証手順です。項目5でFirestore準備・Rules反映・検証公開を実施しました。実機確認は[共有確認手順](./realtime-sharing-verification.md)を参照してください。
 
 ## 必要な環境
 
@@ -50,4 +50,4 @@ npm run dev:emulator
 
 ## 公開と実機確認
 
-未実施です。クラウドのアクセス設定は従来のままで、ローカルの`firestore.rules`とは別です。後日、専用プロジェクトにFirestoreを準備し、テスト済みRulesの公開と2人のiPhoneでの検証を別途行います。それまでは実機確認済み・本番利用可能とは扱いません。
+項目5で東京のFirestore作成・テスト済みRules反映・sharing-checkの検証公開を実施しました。本人の希望によりiPhone＋PC・テスト用2アカウントで確認し、2026-10-20に全手順の成功を本人確認済みです。2台目のiPhoneでの確認は未実施です。[記録0007](./implementation-log/0007-realtime-sharing.md)を参照してください。確認構成と実際の結果を同記録に残しています。

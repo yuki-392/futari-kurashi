@@ -1,6 +1,6 @@
 # 世帯・招待の権限表と検証
 
-対象はPhase 1・項目4。[実装記録0006](./implementation-log/0006-firestore-permissions.md)に理由・修正・結果を残します。ローカルのRulesとEmulator検証が対象で、クラウドへの反映と実機確認は未実施です。
+対象はPhase 1・項目4。[実装記録0006](./implementation-log/0006-firestore-permissions.md)に理由・修正・結果を残します。この文書は項目4のローカル検証と権限表を記録しています。項目5で同じRulesをクラウドへ反映・ソース照合済みです。iPhone＋Mac／Chromeでの共有確認も本人確認済みです（[記録0007](./implementation-log/0007-realtime-sharing.md)）。
 
 ## 前提と登場人物
 
