@@ -96,8 +96,9 @@ export function AuthPanel({ children }: { children?: ReactNode }) {
         </button>
       </>
     )
+  if (auth.status === 'signedIn' && children) return <>{children}</>
   return (
-    <div>
+    <div className="rounded-3xl border border-line bg-white p-6">
       {auth.status === 'signedIn' || auth.status === 'unverified' ? (
         <>
           <h2 className="text-xl font-bold">

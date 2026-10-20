@@ -58,3 +58,51 @@
     font-size: 0.875rem;
   }
 }
+
+@layer components {
+  .app-layout {
+    --nav-space: 0px;
+    padding-bottom: var(--nav-space);
+  }
+  .app-layout:has(.bottom-nav) {
+    --nav-space: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+  .bottom-nav {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 5;
+    padding: 8px max(8px, env(safe-area-inset-right))
+      calc(8px + env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+    border-top: 1px solid var(--color-line);
+    background: white;
+  }
+  .nav-item {
+    display: flex;
+    min-height: 56px;
+    min-width: 44px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 12px;
+    color: var(--color-muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .nav-item[aria-current='page'] {
+    color: var(--color-forest);
+    background: var(--color-sage);
+  }
+  .app-layout .notice {
+    bottom: calc(var(--nav-space) + 1rem);
+    max-height: calc(100dvh - var(--nav-space) - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* Emulatorの警告は残し、固定ナビゲーションの操作を遮らない。 */
+.firebase-emulator-warning {
+  position: static !important;
+}

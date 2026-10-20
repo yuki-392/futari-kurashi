@@ -121,7 +121,7 @@ try {
   await page
     .getByText('iPhoneでホーム画面に追加するには', { exact: true })
     .click()
-  await expect(page.getByText(/HTTPSで公開後、SafariでURLを開き/)).toBeVisible()
+  await expect(page.getByText(/HTTPSのURLをSafariで開き/)).toBeVisible()
   assert(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

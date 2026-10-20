@@ -116,3 +116,11 @@ SDKの診断警告に文書パス＝コードが含まれるため、アプリ�
 ## 実クラウドへの接続（Phase 1・項目5）
 
 専用プロジェクトの(default)はStandard / FIRESTORE_NATIVE / asia-northeast1です。無料枠対象、請求先未接続、PITR無効、削除保護有効。sharing-checkは既存pwa-checkに7日間公開し、実際のAuthとFirestoreへ接続します。プレビュー期限後もDB・Rules・アカウント・世帯を保持します。本番Hostingチャネルには公開していません。共有対象は所属と世帯情報だけで、家事等は未実装のため引き続き拒否します。[記録0007](./implementation-log/0007-realtime-sharing.md)と[実機確認手順](./realtime-sharing-verification.md)を参照してください。
+
+## ホームとナビゲーション（Phase 1・項目6）
+
+認証/メール確認後、既存HouseholdProvider内の所属ゲートでホームの表示を判断します。未所属・取得中・取得失敗では既存準備画面を表示し、所属後だけ6画面のナビゲーションを出します。ホームと設定は同じ購読結果を読み、画面移動でFirestore購読を増やしません。
+
+src/appのハッシュナビゲーションは#/home、#/chores、#/shopping、#/declutter、#/finances、#/settingsを使用。不明な値はホームへ正規化します。初回の保存済みセッションでは直接アクセス先を維持し、認証UID変更と新規世帯参加時はホームへ戻します。履歴移動を購読し、切り替えで見出しフォーカスと先頭スクロールを行います。依存パッケージ、API、Rules、保存スキーマは変更しません。
+
+ホームは実際の世帯と入口だけを表示し、未実装機能は準備中とします。設定の既存招待フォームは画面を離れるとアンマウントし入力を破棄します。メールは設定か準備画面だけに表示。下部メニューはsafe areaと本文の余白を確保し、PWA更新通知はその上へ表示します。[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)を参照してください。

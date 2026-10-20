@@ -101,3 +101,7 @@ npm run dev:emulator
 Firestore APIを有効化してDB一覧が空であることを再確認した後、東京の(default)を作成しました。テストモードは使っていません。`deploy --only firestore:rules --project futari-kurashi-5fcab9`でRulesを反映し、APIで公開ソースとローカルの完全一致を確認しました。Auth設定・既存アカウント・本番Hostingチャネルは変更していません。
 
 共有版sharing-checkは[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)に2026-10-26 16:43（日本時間）まで公開しました。期限後もFirestore・Rules・アカウント・世帯は保持されます。実施したコマンド、Ruleset ID・ハッシュ・公開バージョンは[記録0007](./implementation-log/0007-realtime-sharing.md)を参照してください。追加の公開やルール変更では、常に影響と対象プロジェクトを確認します。
+
+## 項目6の検証公開
+
+pwa-checkはhome-checkへ更新済み。[同じ検証URL](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)、期限2026-10-27 11:06（日本時間）、Hostingバージョン158f2376ce050d83。Emulatorを明示的に無効化し、プロジェクトIDと--no-authorized-domainsを指定した。本番Hosting・Auth設定・Rules・保存データの変更はない。2026-10-20にiPhoneの全確認手順が成功し、[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)に記録する。
