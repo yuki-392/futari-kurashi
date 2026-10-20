@@ -6,11 +6,12 @@ import { HouseholdPanel } from './HouseholdPanel'
 import { useHousehold } from './context'
 
 export function HouseholdGate() {
-  const { status, household } = useHousehold()
+  const { status, household, uid } = useHousehold()
   useEffect(() => {
     if (status === 'none') resetPage()
   }, [status])
-  if (status === 'joined' && household) return <HomeShell />
+  if (status === 'joined' && household)
+    return <HomeShell key={`${uid}:${household.id}`} />
   return (
     <div className="rounded-3xl border border-line bg-white p-6">
       <h1 className="mb-5 text-2xl font-bold">ふたりの暮らしをはじめる</h1>

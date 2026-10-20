@@ -2,10 +2,13 @@ import { existsSync, readdirSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { spawn } from 'node:child_process'
 const suites = {
-  rules: 'node scripts/test-household-rules.mjs',
+  rules:
+    'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs',
+  'task-rules': 'node scripts/test-task-rules.mjs',
   auth: 'node scripts/test-auth.mjs',
   household: 'node scripts/test-household.mjs',
-  all: 'node scripts/test-household-rules.mjs && node scripts/test-auth.mjs && node scripts/test-household.mjs',
+  tasks: 'node scripts/test-task-rules.mjs && node scripts/test-tasks.mjs',
+  all: 'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-auth.mjs && node scripts/test-household.mjs && node scripts/test-tasks.mjs',
 }
 const suite = process.argv[2]
 if (!Object.hasOwn(suites, suite))
@@ -29,7 +32,7 @@ const child = spawn(
     resolve('node_modules/firebase-tools/lib/bin/firebase.js'),
     'emulators:exec',
     '--only',
-    suite === 'rules' ? 'firestore' : 'auth,firestore',
+    ['rules', 'task-rules'].includes(suite) ? 'firestore' : 'auth,firestore',
     '--project',
     'demo-futari-kurashi',
     suites[suite],

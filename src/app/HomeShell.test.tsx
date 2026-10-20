@@ -192,3 +192,14 @@ it('ログアウトの二重操作を防ぎ、通信失敗後は同じ設定画�
   fireEvent.click(screen.getByRole('button', { name: 'ログアウト' }))
   await waitFor(() => expect(auth.logout).toHaveBeenCalledTimes(2))
 })
+
+vi.mock('../features/tasks/service', () => ({
+  watchTasks: (
+    _id: unknown,
+    _q: unknown,
+    next: (tasks: never[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return () => {}
+  },
+}))

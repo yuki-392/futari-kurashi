@@ -105,3 +105,9 @@ Firestore APIを有効化してDB一覧が空であることを再確認した�
 ## 項目6の検証公開
 
 pwa-checkはhome-checkへ更新済み。[同じ検証URL](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)、期限2026-10-27 11:06（日本時間）、Hostingバージョン158f2376ce050d83。Emulatorを明示的に無効化し、プロジェクトIDと--no-authorized-domainsを指定した。本番Hosting・Auth設定・Rules・保存データの変更はない。2026-10-20にiPhoneの全確認手順が成功し、[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)に記録する。
+
+## 項目7: ToDoのRulesとインデックス
+
+新しいtasks用Rulesは既存の所属・世帯・招待を維持して追加限定許可する。変更前のRulesソースと参照は.tools.local/rules-backups/0009-beforeに保存済み。2つの複合インデックス（completed+createdAt降順、completed+dueDate+createdAt降順）だけを追加。fieldOverridesやデータ削除は行わない。公開前にインデックスのREADYとRulesソースの一致を確認する。検証コマンドと公開情報は[記録0009](./implementation-log/0009-tasks.md)、本人操作は[確認手順](./task-verification.md)に残す。本番Hostingは変更しない。
+
+ToDo版todo-checkは[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み。期限2026-10-27 11:56（日本時間）、Hostingバージョン5671b61886b38560。Rulesソース一致と2インデックスREADYは読み戻し確認済み。2026-10-20にiPhone＋Macの全確認手順が成功し、項目7は完了しました。

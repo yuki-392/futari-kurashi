@@ -24,7 +24,8 @@
     "emulators": "firebase emulators:start --project demo-futari-kurashi --only auth,firestore,hosting",
     "test:rules": "node scripts/run-emulators.mjs rules",
     "test:household": "node scripts/run-emulators.mjs household",
-    "test:integration": "node scripts/run-emulators.mjs all"
+    "test:integration": "node scripts/run-emulators.mjs all",
+    "test:tasks": "node scripts/run-emulators.mjs tasks"
   },
   "dependencies": {
     "firebase": "13.0.0",

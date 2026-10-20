@@ -1,3 +1,4 @@
+import { TodayTasks } from '../tasks/TodayTasks'
 import { pages } from '../../app/navigation'
 import { useHousehold } from '../household/context'
 
@@ -31,12 +32,13 @@ export function HomePanel() {
           </a>
         ) : null}
       </section>
+      <TodayTasks />
       <section className="mt-8" aria-labelledby="home-features">
         <h2 id="home-features" className="text-lg font-bold">
           暮らしを整える
         </h2>
         <p className="mt-2 text-sm leading-7 text-muted">
-          家事や買い物などの機能を、これから順番に追加します。
+          家事はToDoで管理できます。買い物や片付けも順番に追加します。
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           {pages.slice(1).map((page) => (
@@ -49,9 +51,11 @@ export function HomePanel() {
               <span className="mt-2 block text-xs text-muted">
                 {page.id === 'settings'
                   ? 'アカウント・世帯'
-                  : page.id === 'finances'
-                    ? 'Phase 2で追加予定'
-                    : '準備中'}
+                  : page.id === 'chores'
+                    ? 'ToDoを管理'
+                    : page.id === 'finances'
+                      ? 'Phase 2で追加予定'
+                      : '準備中'}
               </span>
             </a>
           ))}

@@ -120,6 +120,49 @@ service cloud.firestore {
         && request.resource.data.usedAt == request.time
         && consumedWithHome(code,resource.data);
     }
+    function taskMember(id) {
+      return verified()
+        && get(userPath(request.auth.uid)).data.householdId == id
+        && request.auth.uid in get(homePath(id)).data.memberIds;
+    }
+    function taskCalendarDate(value) {
+      let parts = value.split('-');
+      let year = int(parts[0]);
+      let month = int(parts[1]);
+      let day = int(parts[2]);
+      let date = timestamp.date(year,month,day);
+      return date.year() == year && date.month() == month && date.day() == day;
+    }
+    function validTask(id,data) {
+      return data.keys().hasAll(['title','assigneeIds','dueDate','priority','completed','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['title','assigneeIds','dueDate','priority','completed','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.title is string && data.title == data.title.trim()
+        && data.title.matches('(?s).{1,100}')
+        && data.assigneeIds is list && data.assigneeIds.size() <= 2
+        && data.assigneeIds.toSet().size() == data.assigneeIds.size()
+        && data.assigneeIds.toSet().hasOnly(get(homePath(id)).data.memberIds)
+        && (data.dueDate == null || (data.dueDate is string
+          && data.dueDate.matches('^[1-9][0-9]{3}-[0-9]{2}-[0-9]{2}$')
+          && taskCalendarDate(data.dueDate)))
+        && data.priority in ['low','medium','high']
+        && data.completed is bool
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.createdAt is timestamp && data.updatedAt is timestamp
+        && data.createdBy is string && data.updatedBy == request.auth.uid
+        && data.updatedAt == request.time;
+    }
+    match /households/{householdId}/tasks/{taskId} {
+      allow get: if taskMember(householdId);
+      allow list: if taskMember(householdId) && request.query.limit is int && request.query.limit > 0;
+      allow create: if taskMember(householdId) && validTask(householdId,request.resource.data)
+        && request.resource.data.version == 1 && request.resource.data.completed == false
+        && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if taskMember(householdId) && validTask(householdId,request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.version == resource.data.version + 1;
+      allow delete: if taskMember(householdId);
+    }
     // 未実装の業務データは引き続き全拒否。
     match /{document=**} { allow read, write: if false; }
   }

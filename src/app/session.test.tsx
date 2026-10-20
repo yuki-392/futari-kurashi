@@ -82,3 +82,14 @@ it('既存セッションの直接アクセスを維持し、画面移動で購�
   expect(screen.queryByText('aの世帯')).toBeNull()
   expect(mock.watch).toHaveBeenCalledTimes(2)
 })
+
+vi.mock('../features/tasks/service', () => ({
+  watchTasks: (
+    _id: unknown,
+    _q: unknown,
+    next: (tasks: never[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return () => {}
+  },
+}))

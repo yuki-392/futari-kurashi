@@ -21,9 +21,9 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 `VITE_USE_FIREBASE_EMULATORS`は未指定・`false`・`true`のみ受け付けます。誤記を本番への接続として黙って扱わない設計です。設定完了だけではネットワーク接続を行いません。SDKを使う機能から`getFirebaseServices()`を呼び出してください。
 
-## 世帯データの構成（所属・招待のみローカル実装済み）
+## 世帯データの構成（所属・招待・ToDoを実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。家事などのサブコレクションは設計候補であり、未実装です。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7で実装し、それ以外のサブコレクションは設計候補・未実装です。
 
 ```text
 users/{uid}                         本人の所属（プロフィールは未実装）
@@ -50,7 +50,7 @@ households/{householdId}             世帯とメンバー（上限2人）
 
 ## セキュリティ
 
-リポジトリの`firestore.rules`は本人の所属・世帯・招待だけを限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
+リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDoを限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
 
 FirebaseのWebアプリ設定はクライアントに公開される識別情報です。APIキーだけでデータを守る設計にせず、AuthとSecurity Rulesをアクセス制御の根拠にします。管理者用秘密鍵・サービスアカウントはフロントエンドで使用しません。
 
@@ -115,7 +115,7 @@ SDKの診断警告に文書パス＝コードが含まれるため、アプリ�
 
 ## 実クラウドへの接続（Phase 1・項目5）
 
-専用プロジェクトの(default)はStandard / FIRESTORE_NATIVE / asia-northeast1です。無料枠対象、請求先未接続、PITR無効、削除保護有効。sharing-checkは既存pwa-checkに7日間公開し、実際のAuthとFirestoreへ接続します。プレビュー期限後もDB・Rules・アカウント・世帯を保持します。本番Hostingチャネルには公開していません。共有対象は所属と世帯情報だけで、家事等は未実装のため引き続き拒否します。[記録0007](./implementation-log/0007-realtime-sharing.md)と[実機確認手順](./realtime-sharing-verification.md)を参照してください。
+専用プロジェクトの(default)はStandard / FIRESTORE_NATIVE / asia-northeast1です。無料枠対象、請求先未接続、PITR無効、削除保護有効。sharing-checkは既存pwa-checkに7日間公開し、実際のAuthとFirestoreへ接続します。プレビュー期限後もDB・Rules・アカウント・世帯を保持します。本番Hostingチャネルには公開していません。共有対象は所属と世帯情報だけで、項目5時点では家事等を全拒否としました。項目7ではToDoだけを追加許可し、それ以外の業務データは引き続き拒否します。[記録0007](./implementation-log/0007-realtime-sharing.md)と[実機確認手順](./realtime-sharing-verification.md)を参照してください。
 
 ## ホームとナビゲーション（Phase 1・項目6）
 
@@ -124,3 +124,13 @@ SDKの診断警告に文書パス＝コードが含まれるため、アプリ�
 src/appのハッシュナビゲーションは#/home、#/chores、#/shopping、#/declutter、#/finances、#/settingsを使用。不明な値はホームへ正規化します。初回の保存済みセッションでは直接アクセス先を維持し、認証UID変更と新規世帯参加時はホームへ戻します。履歴移動を購読し、切り替えで見出しフォーカスと先頭スクロールを行います。依存パッケージ、API、Rules、保存スキーマは変更しません。
 
 ホームは実際の世帯と入口だけを表示し、未実装機能は準備中とします。設定の既存招待フォームは画面を離れるとアンマウントし入力を破棄します。メールは設定か準備画面だけに表示。下部メニューはsafe areaと本文の余白を確保し、PWA更新通知はその上へ表示します。[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)を参照してください。
+
+## ToDo（Phase 1・項目7）
+
+src/features/tasksにモデル・サービス・画面・購読・日付フックとテストを配置。家事とホームで必要なクエリだけを購読し、画面移動・UID/世帯変更で破棄する。家事はcompleted条件とcreatedAt降順、ホームはcompleted=falseとdueDate=日本時間の今日・createdAt降順。取得上限+1件から追加表示可否を判定する。日本日付はAsia/TokyoのIntlと日付変更タイマー・前面復帰で追跡する。
+
+保存先はhouseholds/{id}/tasks/{taskId}。title（trim後1〜100 Unicodeコードポイント）、assigneeIds（世帯UIDの重複なし配列・0〜2人）、dueDate（実在するYYYY-MM-DD/null、1000〜9999年）、priority（low/medium/high）、completed（boolean）、version（1以上の整数）、createdAt/createdBy/updatedAt/updatedByを持つ。作成情報は変更不可。2人担当でもどちらかのチェックで共有の完了状態を変更する。
+
+作成/編集/完了/削除はオンラインtransaction。更新/削除は画面が保持するversionと読み直した版を照合し、違えば入力を残して競合を案内する。Rulesは現在の所属と世帯メンバーの両方を確認し、上限指定の一覧・正しいスキーマと監査情報・version+1を強制する。削除にはrequest.resourceがないためRulesは所属による削除権限を検証し、古い版による削除の防止はSDK transactionで実施する。担当による操作権限の制限は設けず、世帯のどちらも操作できる。
+
+データのSWキャッシュ・永続オフラインキャッシュは追加しない。未確認のキャッシュsnapshotと書き込み保留中snapshotは表示せず、オンラインの確定結果を使う。編集中にリストが変わってもフォームの版を自動更新しない。明示的に編集を開き直すとID+版をkeyとして最新入力へ戻す。[記録0009](./implementation-log/0009-tasks.md)と[検証手順](./task-verification.md)を参照する。
