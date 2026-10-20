@@ -1,3 +1,4 @@
+import { DeclutterPanel } from '../features/declutter/DeclutterPanel'
 import { ShoppingPanel } from '../features/shopping/ShoppingPanel'
 import { useEffect, useRef } from 'react'
 import { ChoresPanel } from '../features/recurring-tasks/ChoresPanel'
@@ -28,6 +29,8 @@ export function HomeShell() {
         <ChoresPanel />
       ) : page.id === 'shopping' ? (
         <ShoppingPanel />
+      ) : page.id === 'declutter' ? (
+        <DeclutterPanel />
       ) : page.id === 'settings' ? (
         <>
           <HouseholdPanel />
@@ -39,9 +42,7 @@ export function HomeShell() {
             準備中です
           </p>
           <p className="mt-3 text-sm leading-7 text-muted">
-            {page.id === 'finances'
-              ? '家計管理はPhase 2で追加します。'
-              : `${page.label}の機能は、これから順番に追加します。`}
+            家計管理はPhase 2で追加します。
           </p>
           <a
             className="mt-5 inline-flex min-h-11 items-center text-forest underline"

@@ -23,7 +23,7 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 ## 世帯データの構成（所属・招待・ToDoを実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9で実装し、それ以外は設計候補・未実装です。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9、declutterItemsは項目10で実装し、それ以外は設計候補・未実装です。
 
 ```text
 users/{uid}                         本人の所属（プロフィールは未実装）
@@ -124,7 +124,7 @@ SDKの診断警告に文書パス＝コードが含まれるため、アプリ�
 
 src/appのハッシュナビゲーションは#/home、#/chores、#/shopping、#/declutter、#/finances、#/settingsを使用。不明な値はホームへ正規化します。初回の保存済みセッションでは直接アクセス先を維持し、認証UID変更と新規世帯参加時はホームへ戻します。履歴移動を購読し、切り替えで見出しフォーカスと先頭スクロールを行います。依存パッケージ、API、Rules、保存スキーマは変更しません。
 
-ホームは実際の世帯と入口だけを表示し、未実装機能は準備中とします。設定の既存招待フォームは画面を離れるとアンマウントし入力を破棄します。メールは設定か準備画面だけに表示。下部メニューはsafe areaと本文の余白を確保し、PWA更新通知はその上へ表示します。[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)を参照してください。
+項目6時点のホームは実際の世帯と入口だけを表示しました。現在は項目7以降で今日のToDo・今日/持ち越しの家事・未購入・今日までが期限の未処分も表示します。未実装の家計は準備中です。設定の既存招待フォームは画面を離れるとアンマウントし入力を破棄します。メールは設定か準備画面だけに表示。下部メニューはsafe areaと本文の余白を確保し、PWA更新通知はその上へ表示します。[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)を参照してください。
 
 ## ToDo（Phase 1・項目7）
 
@@ -163,3 +163,15 @@ src/features/shoppingに検証・サービス・購読・フォーム/一覧/ホ
 新規は未購入/版1/サーバー監査時刻、編集/購入状態変更/削除は画面のversionをtransactionの最新読取と照合し、古い版は入力を残して拒否する。削除は完全削除で確認操作を必要とするが、Rulesでは所属による権限を検証し、古い版の削除防止はサービス側（通常ToDoと同様）。履歴/復元は今回追加しない。
 
 未購入はpurchased=false・priority降順・createdAt降順、購入済みはpurchased=true・updatedAt降順。必要に応じカテゴリ完全一致を加え、4形状のCOLLECTION複合インデックスを用意する。一覧100件+1、ホーム5件+1でmoreを判定。クライアント側でカテゴリを間引かず、正確な総数や総予算を推測しない。ホームは購入操作と買い物画面への入口を表示する。購読は画面と認証/世帯変更で解除し、キャッシュ由来/保留中snapshotは表示しない。永続オフラインキャッシュは追加しない。[記録0012](./implementation-log/0012-shopping.md)と[確認手順](./shopping-verification.md)を参照。
+
+## 共有断捨離リスト（項目10）
+
+src/features/declutterに型・検証・Firestoreサービス・購読・フォーム/一覧/ホームを配置する。households/{hid}/declutterItems/{id}の14フィールドはtitle、method（discard/sell/give/hold）、ownerIds（現在の世帯UID配列0〜2・重複不可）、dueDate（日付/null）、sortDueDate（日付/`~`）、completed、completedAt、completedBy、version、createdAt/createdBy/updatedAt/updatedBy。品名はトリム済み1〜100文字。期限は日本時間基準の実在日。所有者未設定と未担当を区別し、所有者から完了記録者を推測しない。
+
+未処分はcompleted=false・sortDueDate昇順・createdAt降順。期限なしは`~`で末尾になり、RulesがdueDateとの一致を強制する。処分済みはcompleted=true・completedAt降順。両方とも任意のmethod完全一致をサーバー条件に追加する4形状の複合インデックスを定義する。一覧は100件+1、ホームはcompleted=false・sortDueDate<=日本時間の今日で5件+1を取得し、総件数を推測せず追加案内だけを表示する。ホームは表示と片付けへの入口のみ。useTokyoDayで深夜と前面復帰時の条件を更新する。
+
+新規は未処分・完了日時/記録者null。保留の完了を拒否し、false→trueはrequest.timeと操作UID、true→trueの通常編集は従前の完了監査を保持、true→falseだけnullへ解除する。再完了は新しい監査に置き換える。全履歴は持たず、完全削除では完了情報も消える。処分済みの保留への編集は先に未処分へ戻す。
+
+編集/完了/解除/削除はtransactionで表示時の版を照合し、競合で入力を保持する。削除時の版照合はサービス側、Rulesの削除許可は同世帯所属の検証。作成情報は不変、変更は版+1とサーバー監査を必須にする。確認済み同世帯だけに単体取得/上限付き一覧/書き込みを限定し、他世帯・未所属・未確認・未認証・未実装パスは拒否する。認証/世帯/画面変更で購読・表示・入力を破棄し、オンライン時だけ書き込む。Firestore永続キャッシュは追加しない。
+
+買い替え候補・写真・売却金額・買い物/家計連携は未実装。[記録0013](./implementation-log/0013-declutter.md)と[確認手順](./declutter-verification.md)を参照。

@@ -1,3 +1,4 @@
+import { HomeDeclutter } from '../declutter/DeclutterPanel'
 import { HomeShopping } from '../shopping/ShoppingPanel'
 import { TodayRecurring } from '../recurring-tasks/RecurringPanels'
 import { TodayTasks } from '../tasks/TodayTasks'
@@ -37,12 +38,13 @@ export function HomePanel() {
       <TodayTasks />
       <TodayRecurring />
       <HomeShopping />
+      <HomeDeclutter />
       <section className="mt-8" aria-labelledby="home-features">
         <h2 id="home-features" className="text-lg font-bold">
           暮らしを整える
         </h2>
         <p className="mt-2 text-sm leading-7 text-muted">
-          家事や買い物をふたりで管理できます。片付けも順番に追加します。
+          家事・買い物・片付けをふたりで管理できます。
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           {pages.slice(1).map((page) => (
@@ -61,7 +63,7 @@ export function HomePanel() {
                       ? '買うものを共有'
                       : page.id === 'finances'
                         ? 'Phase 2で追加予定'
-                        : '準備中'}
+                        : '処分候補を共有'}
               </span>
             </a>
           ))}

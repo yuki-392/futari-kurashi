@@ -341,6 +341,40 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if taskMember(hid);
     }
+    function validDeclutter(hid, data) {
+      return data.keys().hasAll(['title','method','ownerIds','dueDate','sortDueDate','completed','completedAt','completedBy','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['title','method','ownerIds','dueDate','sortDueDate','completed','completedAt','completedBy','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.title is string && data.title == data.title.trim() && data.title.matches('(?s).{1,100}')
+        && data.method in ['discard','sell','give','hold']
+        && data.ownerIds is list && data.ownerIds.size() <= 2 && data.ownerIds.toSet().size() == data.ownerIds.size()
+        && data.ownerIds.toSet().hasOnly(get(homePath(hid)).data.memberIds)
+        && (data.dueDate == null || recValidDate(data.dueDate))
+        && data.sortDueDate == (data.dueDate == null ? '~' : data.dueDate)
+        && data.completed is bool
+        && (data.completed
+          ? (data.method != 'hold' && data.completedAt is timestamp && data.completedBy in get(homePath(hid)).data.memberIds)
+          : (data.completedAt == null && data.completedBy == null))
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedAt == request.time && data.updatedBy == request.auth.uid;
+    }
+    function declutterCompletion(before, after) {
+      return !after.completed || (before.completed
+        ? (after.completedAt == before.completedAt && after.completedBy == before.completedBy)
+        : (after.completedAt == request.time && after.completedBy == request.auth.uid));
+    }
+    match /households/{hid}/declutterItems/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0;
+      allow create: if taskMember(hid) && validDeclutter(hid,request.resource.data)
+        && request.resource.data.version == 1 && !request.resource.data.completed
+        && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if taskMember(hid) && validDeclutter(hid,request.resource.data)
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy
+        && declutterCompletion(resource.data,request.resource.data);
+      allow delete: if taskMember(hid);
+    }
     // 未実装の業務データは引き続き全拒否。
     match /{document=**} { allow read, write: if false; }
   }

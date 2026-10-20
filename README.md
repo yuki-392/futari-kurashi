@@ -77,7 +77,7 @@ docs/                  仕様・設計・手順・開発計画
 - [Firebaseセットアップ](./docs/firebase-setup.md): Console・環境変数・Emulator・公開
 - [Codex向けガイド](./AGENTS.md): 次回作業時の参照順と開発ルール
 
-GitHub Actionsは`npm ci`と`npm run check`を実行します。PWAの実ブラウザーテストは、別途Chromiumをインストールして`npm run test:pwa`で実行します。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済みです。GitHub Privateリポジトリの作成・remoteの設定・pushは未実施です。Hostingの検証公開状況は[実装記録0003](./docs/implementation-log/0003-pwa-iphone.md)に記録します。
+GitHub ActionsはNode.js 24/JDK21とChromiumを用意し、`npm ci`・`npm run check`・`npm run test:integration`・`npm run test:pwa`を実行します。ローカルでのPWAブラウザーテストもChromiumをインストールして`npm run test:pwa`で実行します。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済みです。GitHub Privateリポジトリの作成・remoteの設定・pushは未実施です。Hostingの検証公開状況は[実装記録0003](./docs/implementation-log/0003-pwa-iphone.md)に記録します。
 
 実装ごとの理由は[実装記録](./docs/implementation-log/README.md)から確認できます。指摘するときは、チャットで「0003のD1について、こう変えたい」のように伝えてください。Codexが対象の記録に指摘・対応・再検証を追記します。
 
@@ -89,7 +89,7 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 
 ## iPhone＋PCでの共有確認
 
-[共有確認手順](./docs/realtime-sharing-verification.md)に沿って進めます。共有確認は完了済みで、同じURLは現在shopping-checkに更新されています（2026-10-27 15:10、日本時間まで有効）。世帯を作るのはAだけ、Bは招待から参加します。プレビュー期限後もデータは保持します。実施した設定と公開情報は[記録0007](./docs/implementation-log/0007-realtime-sharing.md)に残しています。
+[共有確認手順](./docs/realtime-sharing-verification.md)に沿って進めます。共有確認は完了済みで、同じURLは現在declutter-checkに更新されています（2026-10-27 16:01、日本時間まで有効）。世帯を作るのはAだけ、Bは招待から参加します。プレビュー期限後もデータは保持します。実施した設定と公開情報は[記録0007](./docs/implementation-log/0007-realtime-sharing.md)に残しています。
 
 ## ホームと6画面の操作
 
@@ -110,3 +110,9 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 ## 共有買い物リスト
 
 買い物画面で商品・固定カテゴリ・数量/単位・項目全体の予算・担当・優先度を管理し、購入済み/解除と確認付き削除ができます。未購入は高優先度/新規順、購入済みは更新順。ホームは未購入最大5件と追加分の案内を表示します。`npm run test:shopping`で新しいRulesと2ブラウザーフローを検証できます。shopping-checkを既存pwa-checkへ検証公開し、2026-10-20にiPhone＋Macの①〜⑤を本人確認済みで項目9は完了です。期限2026-10-27 15:10（日本時間）。[確認手順](./docs/shopping-verification.md)と[記録0012](./docs/implementation-log/0012-shopping.md)を参照してください。定期購入品と家計連携は別項目です。
+
+## 共有断捨離リスト
+
+片付け画面で品名・処分方法（捨てる/売る/譲る/保留）・所有者・任意の期限を共有し、両メンバーが編集/処分完了/解除/確認付き完全削除を行えます。保留のままの完了はできません。未処分は期限順（期限なしは最後）、処分済みは完了日時順。方法をサーバー条件で絞り込み、100件ずつ追加表示します。完了を記録した人は所有者とは別に表示し、通常編集は監査を保持、解除で消します。ホームは今日以前が期限の未処分を最大5件表示し、操作は片付け画面で行います。
+
+`npm run test:declutter`は新しいRules/2ブラウザー、`npm run test:integration`は既存機能も含む全検証を実行します。120単体テスト・全Emulator統合・PWA検証は成功。Rulesソース一致・全13インデックスREADYを確認し、declutter-checkを既存pwa-checkへ公開済み（期限2026-10-27 16:01日本時間、Hosting 9522053e0ae6cb06）。2026-10-20にiPhone 16 / iOS 26.2＋Mac／Chrome・既存のテスト用2アカウントで①〜⑤「すべてok」と本人確認済み。反映時間は未申告。項目10完了。[確認手順](./docs/declutter-verification.md)と[記録0013](./docs/implementation-log/0013-declutter.md)を参照してください。買い替え候補・写真・売却金額・家計連携は今回対象外です。

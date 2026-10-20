@@ -119,3 +119,17 @@ vi.mock('../features/shopping/service', () => ({
   changeShopping: vi.fn(),
   removeShopping: vi.fn(),
 }))
+
+vi.mock('../features/declutter/service', () => ({
+  watchDeclutter: (
+    _h: unknown,
+    _q: unknown,
+    next: (items: unknown[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return () => {}
+  },
+  createDeclutter: vi.fn(),
+  changeDeclutter: vi.fn(),
+  removeDeclutter: vi.fn(),
+}))

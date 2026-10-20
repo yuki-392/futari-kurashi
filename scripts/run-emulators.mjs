@@ -2,11 +2,14 @@ import { existsSync, readdirSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { spawn } from 'node:child_process'
 const suites = {
+  'declutter-rules': 'node scripts/test-declutter-rules.mjs',
+  declutter:
+    'node scripts/test-declutter-rules.mjs && node scripts/test-declutter.mjs',
   'shopping-rules': 'node scripts/test-shopping-rules.mjs',
   shopping:
     'node scripts/test-shopping-rules.mjs && node scripts/test-shopping.mjs',
   rules:
-    'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-recurring-rules.mjs && node scripts/test-cleaning-rules.mjs && node scripts/test-shopping-rules.mjs',
+    'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-recurring-rules.mjs && node scripts/test-cleaning-rules.mjs && node scripts/test-shopping-rules.mjs && node scripts/test-declutter-rules.mjs',
   'cleaning-rules': 'node scripts/test-cleaning-rules.mjs',
   cleaning:
     'node scripts/test-cleaning-rules.mjs && node scripts/test-recurring.mjs',
@@ -17,7 +20,7 @@ const suites = {
   recurring:
     'node scripts/test-recurring-rules.mjs && node scripts/test-recurring.mjs',
   tasks: 'node scripts/test-task-rules.mjs && node scripts/test-tasks.mjs',
-  all: 'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-recurring-rules.mjs && node scripts/test-cleaning-rules.mjs && node scripts/test-shopping-rules.mjs && node scripts/test-auth.mjs && node scripts/test-household.mjs && node scripts/test-tasks.mjs && node scripts/test-recurring.mjs && node scripts/test-shopping.mjs',
+  all: 'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-recurring-rules.mjs && node scripts/test-cleaning-rules.mjs && node scripts/test-shopping-rules.mjs && node scripts/test-declutter-rules.mjs && node scripts/test-auth.mjs && node scripts/test-household.mjs && node scripts/test-tasks.mjs && node scripts/test-recurring.mjs && node scripts/test-shopping.mjs && node scripts/test-declutter.mjs',
 }
 const suite = process.argv[2]
 if (!Object.hasOwn(suites, suite))
@@ -47,6 +50,7 @@ const child = spawn(
       'recurring-rules',
       'cleaning-rules',
       'shopping-rules',
+      'declutter-rules',
     ].includes(suite)
       ? 'firestore'
       : 'auth,firestore',
