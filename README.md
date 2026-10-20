@@ -2,7 +2,9 @@
 
 **家事も、お金も、ふたりで。**
 
-同棲カップル2人向けの生活管理PWAです。Phase 1・項目1のPWA対応は、iPhone 16 / iOS 26.2での実機検証まで完了しました。Phase 1・項目2の認証機能も、実装・自動検証・検証公開・一連の実機確認まで完了しました。世帯作成・招待・参加は検証用公開済みで、2026-10-20にiPhone＋Mac／Chrome・テスト用2アカウントでの共有確認まで完了しました。ホーム・6画面のナビゲーションも2026-10-20にiPhoneの本人確認まで完了しました。ToDoも2026-10-20にiPhone＋Macの全確認手順が成功し、完了しました。繰り返し家事や買い物などはこれから実装します。
+同棲カップル2人向けの生活管理PWAです。Phase 1の認証・世帯共有・ホーム/6画面・ToDo・繰り返し家事/掃除・買い物・断捨離は実装とiPhone＋Macでの本人確認まで完了しました。項目11で[本番URL](https://futari-kurashi-5fcab9.web.app)へ初回公開済みです。本番での①〜⑤は2026-10-20に本人確認済みで、現在は使用量の不足指標を確認待ちとして、Phase 1は完了扱いにしていません。
+
+本番の識別子は`phase1-release`、期限はありません。プレビューと同じAuth/Firestoreを使用しますが、ブラウザーの保存先は別なのでログイン・iPhoneのホーム画面追加をやり直してください。[公開・使用量確認手順](./docs/release-verification.md)と[記録0014](./docs/implementation-log/0014-production-release.md)を参照してください。
 
 ## 開発を始める
 
@@ -68,6 +70,7 @@ docs/                  仕様・設計・手順・開発計画
 
 ## ドキュメント
 
+- [公開・使用量確認手順](./docs/release-verification.md): 本番URL・PWA追加・使用量・復旧手順
 - [製品仕様](./docs/product-spec.md): 提供いただいた企画・要件の全体
 - [開発計画](./docs/roadmap.md): 実装状況・次の作業
 - [実装記録](./docs/implementation-log/README.md): 各作業の目的・判断理由・検証結果・指摘と対応
@@ -77,7 +80,7 @@ docs/                  仕様・設計・手順・開発計画
 - [Firebaseセットアップ](./docs/firebase-setup.md): Console・環境変数・Emulator・公開
 - [Codex向けガイド](./AGENTS.md): 次回作業時の参照順と開発ルール
 
-GitHub ActionsはNode.js 24/JDK21とChromiumを用意し、`npm ci`・`npm run check`・`npm run test:integration`・`npm run test:pwa`を実行します。ローカルでのPWAブラウザーテストもChromiumをインストールして`npm run test:pwa`で実行します。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済みです。GitHub Privateリポジトリの作成・remoteの設定・pushは未実施です。Hostingの検証公開状況は[実装記録0003](./docs/implementation-log/0003-pwa-iphone.md)に記録します。
+GitHub ActionsはNode.js 24/JDK21とChromiumを用意し、`npm ci`・`npm run check`・`npm run test:integration`・`npm run test:pwa`を実行します。ローカルでのPWAブラウザーテストもChromiumをインストールして`npm run test:pwa`で実行します。専用Firebaseプロジェクト`futari-kurashi-5fcab9`を作成済みです。GitHub Privateリポジトリの作成・remoteの設定・pushは未実施です。Hostingの本番公開状況は[実装記録0014](./docs/implementation-log/0014-production-release.md)、初期PWA検証は[0003](./docs/implementation-log/0003-pwa-iphone.md)を参照してください。
 
 実装ごとの理由は[実装記録](./docs/implementation-log/README.md)から確認できます。指摘するときは、チャットで「0003のD1について、こう変えたい」のように伝えてください。Codexが対象の記録に指摘・対応・再検証を追記します。
 

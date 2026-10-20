@@ -116,7 +116,7 @@ SDKの診断警告に文書パス＝コードが含まれるため、アプリ�
 
 ## 実クラウドへの接続（Phase 1・項目5）
 
-専用プロジェクトの(default)はStandard / FIRESTORE_NATIVE / asia-northeast1です。無料枠対象、請求先未接続、PITR無効、削除保護有効。sharing-checkは既存pwa-checkに7日間公開し、実際のAuthとFirestoreへ接続します。プレビュー期限後もDB・Rules・アカウント・世帯を保持します。本番Hostingチャネルには公開していません。共有対象は所属と世帯情報だけで、項目5時点では家事等を全拒否としました。項目7ではToDoだけを追加許可し、それ以外の業務データは引き続き拒否します。[記録0007](./implementation-log/0007-realtime-sharing.md)と[実機確認手順](./realtime-sharing-verification.md)を参照してください。
+専用プロジェクトの(default)はStandard / FIRESTORE_NATIVE / asia-northeast1です。無料枠対象、請求先未接続、PITR無効、削除保護有効。sharing-checkは既存pwa-checkに7日間公開し、実際のAuthとFirestoreへ接続します。プレビュー期限後もDB・Rules・アカウント・世帯を保持します。項目5時点では本番Hostingチャネルに未公開でした。共有対象は所属と世帯情報だけで、項目5時点では家事等を全拒否としました。項目7ではToDoだけを追加許可し、それ以外の業務データは引き続き拒否します。[記録0007](./implementation-log/0007-realtime-sharing.md)と[実機確認手順](./realtime-sharing-verification.md)を参照してください。
 
 ## ホームとナビゲーション（Phase 1・項目6）
 
@@ -175,3 +175,11 @@ src/features/declutterに型・検証・Firestoreサービス・購読・フォ�
 編集/完了/解除/削除はtransactionで表示時の版を照合し、競合で入力を保持する。削除時の版照合はサービス側、Rulesの削除許可は同世帯所属の検証。作成情報は不変、変更は版+1とサーバー監査を必須にする。確認済み同世帯だけに単体取得/上限付き一覧/書き込みを限定し、他世帯・未所属・未確認・未認証・未実装パスは拒否する。認証/世帯/画面変更で購読・表示・入力を破棄し、オンライン時だけ書き込む。Firestore永続キャッシュは追加しない。
 
 買い替え候補・写真・売却金額・買い物/家計連携は未実装。[記録0013](./implementation-log/0013-declutter.md)と[確認手順](./declutter-verification.md)を参照。
+
+## 本番公開と無料枠の確認（項目11）
+
+Firebase Hostingのliveへphase1-releaseを初回公開。標準URLはhttps://futari-kurashi-5fcab9.web.app 、期限なし。フッターはアプリ名とビルド識別子を残し「開発中」を削除した。新規API・保存形式・権限・購読・依存追加はない。
+
+previewとliveは同じFirebase Auth/Firestoreへ接続するが、originが違うためログイン状態・Service Worker・ホーム画面アイコンは自動移行しない。ユーザーは本番URLへログインし直し、iPhoneでホーム画面へ追加し直す。既存のクラウドデータは引き続き使う。静的キャッシュだけを維持し、個人データの永続オフライン保存は追加しない。
+
+無料枠はAPI/Consoleの実測日時と対象期間を記録し、欠測を0としない。Hostingはプロジェクト全体、日次/月次転送と保持済み版の容量も対象。Firestore日次枠は太平洋時間基準。請求先未接続を維持し、課金・有料監視・定期バックエンドを追加しない。現在の枠内と将来の無料運用保証を区別する。本番①〜⑤は2026-10-20に本人確認済み。使用量のFirestore保存/月次送信が未取得のためPhase 1完了とは扱わない。[記録0014](./implementation-log/0014-production-release.md)と[確認手順](./release-verification.md)を参照。

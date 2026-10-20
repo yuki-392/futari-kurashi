@@ -37,7 +37,7 @@ export default function App() {
           </p>
         </details>
         <footer className="py-8 text-xs leading-6 text-muted">
-          ふたりの暮らし · 開発中 · {import.meta.env.VITE_APP_BUILD_LABEL}
+          ふたりの暮らし · {import.meta.env.VITE_APP_BUILD_LABEL}
         </footer>
       </main>
       <PwaUpdateNotice />
