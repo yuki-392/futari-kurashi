@@ -23,14 +23,15 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 ## 世帯データの構成（所属・招待・ToDoを実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7で実装し、それ以外のサブコレクションは設計候補・未実装です。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。それ以外は設計候補・未実装です。
 
 ```text
 users/{uid}                         本人の所属（プロフィールは未実装）
 householdInvites/{code}              メール指定の招待（24時間・1回限り）
 households/{householdId}             世帯とメンバー（上限2人）
   tasks/{taskId}                     ToDo・家事
-  cleaningSchedules/{scheduleId}     掃除の繰り返し設定
+  recurringTasks/{definitionId}      繰り返し家事・掃除の定義
+  recurringCompletions/{historyId}   実施履歴・取消記録
   shoppingItems/{itemId}             買い物
   declutterItems/{itemId}            断捨離
   expenses/{expenseId}               Phase 2: 支出
@@ -50,7 +51,7 @@ households/{householdId}             世帯とメンバー（上限2人）
 
 ## セキュリティ
 
-リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDoを限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
+リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDo・繰り返し定義と履歴を限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
 
 FirebaseのWebアプリ設定はクライアントに公開される識別情報です。APIキーだけでデータを守る設計にせず、AuthとSecurity Rulesをアクセス制御の根拠にします。管理者用秘密鍵・サービスアカウントはフロントエンドで使用しません。
 
@@ -134,3 +135,23 @@ src/features/tasksにモデル・サービス・画面・購読・日付フッ�
 作成/編集/完了/削除はオンラインtransaction。更新/削除は画面が保持するversionと読み直した版を照合し、違えば入力を残して競合を案内する。Rulesは現在の所属と世帯メンバーの両方を確認し、上限指定の一覧・正しいスキーマと監査情報・version+1を強制する。削除にはrequest.resourceがないためRulesは所属による削除権限を検証し、古い版による削除の防止はSDK transactionで実施する。担当による操作権限の制限は設けず、世帯のどちらも操作できる。
 
 データのSWキャッシュ・永続オフラインキャッシュは追加しない。未確認のキャッシュsnapshotと書き込み保留中snapshotは表示せず、オンラインの確定結果を使う。編集中にリストが変わってもフォームの版を自動更新しない。明示的に編集を開き直すとID+版をkeyとして最新入力へ戻す。[記録0009](./implementation-log/0009-tasks.md)と[検証手順](./task-verification.md)を参照する。
+
+## 繰り返しと履歴（Phase 1・項目8A）
+
+src/features/recurring-tasksに周期計算・サービス・購読・フォーム/一覧/履歴・家事の切り替えをまとめる。通常ToDoはtasksのまま維持し、繰り返し定義はhouseholds/{hid}/recurringTasks/{id}、履歴は同世帯のrecurringCompletions/{id}に分離する。未完了は定義のnextDueDateが表す1件だけで、日々の生成やバックエンド定期処理は行わない。
+
+定義はtitle/assigneeIds/priority、frequency（daily/weekly/monthly）、startDate、nextDueDate、active、version、lastCompletionId、lastAction、createdAt/createdBy/updatedAt/updatedBy。開始日と次回日は実在日かつ周期上の日付。設定編集では次回予定を明示的に選び直し、過去の履歴を変更しない。
+
+履歴IDは定義ID_更新後version。scheduleId/scheduleVersion、完了時点のtitle/assigneeIds/priority/frequency/startDate、scheduledDate/nextDueDate、completedAt/completedBy、cancelledAt/cancelledByを保存。完了は定義と履歴、取消は定義の予定復元と履歴の取消記録を原子的に更新。履歴本体を編集・削除しない。
+
+次回はmax(今回予定,日本時間の完了日)より後の最初の周期日。月末丸めは元の開始日の日付を維持する。Rulesはrequest.time+9時間の日付から同じ計算を独立検証し、lastActionで編集・完了・取消を区別する。編集/停止/再開と取消は参照をnullにし、過去の完了をさらに巻き戻せない。早期完了も可能。
+
+一覧は定義/履歴100件、ホームはactive=trueかつnextDueDate<=日本時間の今日を10件ずつ。履歴は表示中の未取消記録に対応する定義をIDで重複排除して単体購読し、現在の版と直近参照で取消可否を判定。全購読は画面・認証・世帯変更時に解除する。[記録0010](./implementation-log/0010-recurring-tasks.md)と[検証手順](./recurring-verification.md)を参照。掃除スケジュール/担当交代は8B。
+
+## 掃除と担当交代（Phase 1・項目8B）
+
+既存recurringTasks/recurringCompletionsへtaskType（general/cleaning）、place、rotation（fixed/alternate）の3項目を追加する。全項目がない旧形式はgeneral/空文字/fixedとして扱い、一括移行せず編集で新形式を保存する。新形式は3項目全て必須、場所ありならcleaning、なしならgeneral。履歴は完了時点の追加項目と完了前の担当を保持し、過去の履歴を書き換えない。新サービスは旧定義の完了でも一般/空文字/固定を新履歴に明示保存する。旧クライアントが旧定義に旧形式の履歴を残す互換性も維持するが、新形式の定義から項目を欠落させた履歴は拒否する。
+
+完了は現在担当以外へ交代し、実行者とは独立。交代時はtransactionで世帯メンバーも読み、2人・現在担当1人を確認する。定義更新・履歴作成・次回予定・担当交代をまとめ、取消では履歴の担当と予定を戻す。Rulesでも同じ交代先と原子性を強制する。追加項目を消す旧版保存や交代しない旧版完了は拒否される。固定担当の既存データも通常ToDoも維持する。
+
+src/features/cleaningの今日/今週画面は、稼働中の掃除かつnextDueDate<=対象末日を取得し、場所を指定した場合はその完全一致もサーバー条件へ含める。100件+1で追加表示を判定し、未取得分の総数を表示しない。今週は日本時間の月〜日。現在の未完了1件だけを操作でき、持ち越しを今日完了した想定で、残りの週内の周期・交代担当を参考表示する。未来文書や未実施履歴は生成しない。日付変更・前面復帰で期間を更新し、入力は保つ。場所の管理用コレクションや定義削除は追加しない。[記録0011](./implementation-log/0011-cleaning.md)と[確認手順](./cleaning-verification.md)を参照。

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { TasksPanel } from '../features/tasks/TasksPanel'
+import { ChoresPanel } from '../features/recurring-tasks/ChoresPanel'
 import { HomePanel } from '../features/home/HomePanel'
 import { HouseholdPanel } from '../features/household/HouseholdPanel'
 import { AccountControls } from '../features/auth/AccountControls'
@@ -24,7 +24,7 @@ export function HomeShell() {
       {page.id === 'home' ? (
         <HomePanel />
       ) : page.id === 'chores' ? (
-        <TasksPanel />
+        <ChoresPanel />
       ) : page.id === 'settings' ? (
         <>
           <HouseholdPanel />

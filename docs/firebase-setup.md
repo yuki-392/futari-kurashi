@@ -111,3 +111,15 @@ pwa-checkはhome-checkへ更新済み。[同じ検証URL](https://futari-kurashi
 新しいtasks用Rulesは既存の所属・世帯・招待を維持して追加限定許可する。変更前のRulesソースと参照は.tools.local/rules-backups/0009-beforeに保存済み。2つの複合インデックス（completed+createdAt降順、completed+dueDate+createdAt降順）だけを追加。fieldOverridesやデータ削除は行わない。公開前にインデックスのREADYとRulesソースの一致を確認する。検証コマンドと公開情報は[記録0009](./implementation-log/0009-tasks.md)、本人操作は[確認手順](./task-verification.md)に残す。本番Hostingは変更しない。
 
 ToDo版todo-checkは[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み。期限2026-10-27 11:56（日本時間）、Hostingバージョン5671b61886b38560。Rulesソース一致と2インデックスREADYは読み戻し確認済み。2026-10-20にiPhone＋Macの全確認手順が成功し、項目7は完了しました。
+
+## 項目8A：繰り返し家事と履歴
+
+繰り返し定義/履歴のRulesを追加反映し、ローカルとのソース一致を確認。active昇順＋nextDueDate昇順のCOLLECTIONインデックスを追加しREADYを確認した。既存のToDo用2件も維持。反映前Rules/参照情報はGit対象外の.tools.local/rules-backups/0010-beforeへ保存。認証・既存データ・本番Hostingは変更しない。
+
+VITE_USE_FIREBASE_EMULATORS=false、識別子recurring-checkで既存[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ7日間検証公開済み。期限2026-10-27 12:30（日本時間）、Hosting 4af43d213c81ba05。公開コマンドはプロジェクトIDと--no-authorized-domainsを明示。Spark・請求先未接続を読み戻し確認。プレビュー期限後もFirestore/Rules/データは残る。[記録0010](./implementation-log/0010-recurring-tasks.md)と[確認手順](./recurring-verification.md)を参照。2026-10-20にiPhone＋Macの①〜⑤すべてを本人確認し項目8A完了。項目8A完了時点では項目8Bは未着手（現在は下記参照）。
+
+## 項目8B：掃除場所と担当交代
+
+既存の繰り返し定義と履歴を拡張し、Rulesを反映・ソース完全一致を確認済み。反映前の参照/ソースはGit対象外の.tools.local/rules-backups/0011-beforeへ保存。active/taskType/nextDueDateとactive/taskType/place/nextDueDateの昇順COLLECTIONインデックスを2件追加しREADYを確認。既存3件・fieldOverrides=[]を維持。旧文書の一括移行や削除はせず、旧定義の完了でも新サービスは履歴へ一般/場所なし/固定を明示保存する。
+
+Emulator無効・識別子cleaning-checkで既存[pwa-check](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)を7日間更新。期限2026-10-27 14:25（日本時間）、Hosting 5edbb93c7bacfc70。公開時はプロジェクトIDと--no-authorized-domainsを明示。Spark/請求先未接続を確認し、本番Hosting/既存データ/Auth設定は維持。プレビュー期限後もFirestore/Rules/データは残る。[記録0011](./implementation-log/0011-cleaning.md)と[確認手順](./cleaning-verification.md)を参照。2026-10-20にiPhone＋Macの①〜⑤を本人確認し項目8B完了。

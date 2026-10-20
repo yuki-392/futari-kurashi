@@ -285,3 +285,15 @@ it('世帯が変わると前の世帯の編集中入力と版を破棄する', (
   expect(screen.queryByText('洗濯')).toBeNull()
   history.replaceState(null, '', '#/home')
 })
+
+vi.mock('../recurring-tasks/service', () => ({
+  watchRecurring: (
+    _h: unknown,
+    _q: unknown,
+    next: (items: never[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return () => {}
+  },
+  watchUndoTargets: () => () => {},
+}))

@@ -1,3 +1,4 @@
+import { TodayRecurring } from '../recurring-tasks/RecurringPanels'
 import { TodayTasks } from '../tasks/TodayTasks'
 import { pages } from '../../app/navigation'
 import { useHousehold } from '../household/context'
@@ -33,6 +34,7 @@ export function HomePanel() {
         ) : null}
       </section>
       <TodayTasks />
+      <TodayRecurring />
       <section className="mt-8" aria-labelledby="home-features">
         <h2 id="home-features" className="text-lg font-bold">
           暮らしを整える

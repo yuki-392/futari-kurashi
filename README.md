@@ -89,7 +89,7 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 
 ## iPhone＋PCでの共有確認
 
-[共有確認手順](./docs/realtime-sharing-verification.md)に沿って進めます。共有確認は完了済みで、同じURLは現在todo-checkに更新されています（2026-10-27 11:56、日本時間まで有効）。世帯を作るのはAだけ、Bは招待から参加します。プレビュー期限後もデータは保持します。実施した設定と公開情報は[記録0007](./docs/implementation-log/0007-realtime-sharing.md)に残しています。
+[共有確認手順](./docs/realtime-sharing-verification.md)に沿って進めます。共有確認は完了済みで、同じURLは現在cleaning-checkに更新されています（2026-10-27 14:25、日本時間まで有効）。世帯を作るのはAだけ、Bは招待から参加します。プレビュー期限後もデータは保持します。実施した設定と公開情報は[記録0007](./docs/implementation-log/0007-realtime-sharing.md)に残しています。
 
 ## ホームと6画面の操作
 
@@ -98,3 +98,11 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 ## ToDoと今日の一覧
 
 家事画面からToDoを追加・編集・削除・完了/解除できます。担当は未担当・自分・相手・2人、日付期限と優先度を指定できます。2人担当でもどちらかの操作で完了します。ホームは日本時間の今日が期限の未完了を表示します。todo-checkを既存pwa-checkへ検証公開済みで、2026-10-27 11:56（日本時間）まで有効です。2026-10-20にiPhone＋Macの全確認手順が成功しました。[検証手順](./docs/task-verification.md)と[実装記録0009](./docs/implementation-log/0009-tasks.md)を参照してください。
+
+## 繰り返し家事と履歴
+
+家事画面のToDo/繰り返し/履歴から毎日・毎週・毎月の家事を管理します。未完了は1件持ち越し、直近の完了だけ取消可能。停止・再開や設定変更は以前の完了を取り消さず、履歴を保持します。通常ToDoは従来どおりです。[確認手順](./docs/recurring-verification.md)と[記録0010](./docs/implementation-log/0010-recurring-tasks.md)を参照してください。実装・自動検証・検証公開に加え、2026-10-20にiPhone＋Macの①〜⑤すべてを本人確認済みで、項目8Aは完了です。期限は2026-10-27 12:30（日本時間）です。
+
+## 掃除スケジュールと担当交代
+
+家事→掃除で今日/今週と場所別に確認できます。繰り返し家事の場所を設定すると掃除になり、2人世帯・担当1人では完了ごとの交代も選べます。直近取消で予定と担当を復元し、週間の未来分は参考予定として表示します。`npm run test:cleaning`で新しい権限とブラウザーフローを確認できます。cleaning-checkを既存pwa-checkへ検証公開し、2026-10-20にiPhone＋Macの①〜⑤を本人確認済みで項目8Bは完了です。期限2026-10-27 14:25（日本時間）。[確認手順](./docs/cleaning-verification.md)と[記録0011](./docs/implementation-log/0011-cleaning.md)を参照してください。

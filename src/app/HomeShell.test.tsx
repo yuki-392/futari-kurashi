@@ -203,3 +203,15 @@ vi.mock('../features/tasks/service', () => ({
     return () => {}
   },
 }))
+
+vi.mock('../features/recurring-tasks/service', () => ({
+  watchRecurring: (
+    _h: unknown,
+    _q: unknown,
+    next: (items: never[], more: boolean) => void,
+  ) => {
+    next([], false)
+    return () => {}
+  },
+  watchUndoTargets: () => () => {},
+}))

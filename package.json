@@ -25,6 +25,8 @@
     "test:rules": "node scripts/run-emulators.mjs rules",
     "test:household": "node scripts/run-emulators.mjs household",
     "test:integration": "node scripts/run-emulators.mjs all",
+    "test:cleaning": "node scripts/run-emulators.mjs cleaning",
+    "test:recurring": "node scripts/run-emulators.mjs recurring",
     "test:tasks": "node scripts/run-emulators.mjs tasks"
   },
   "dependencies": {

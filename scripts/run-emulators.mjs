@@ -3,12 +3,18 @@ import { resolve, join } from 'node:path'
 import { spawn } from 'node:child_process'
 const suites = {
   rules:
-    'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs',
+    'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-recurring-rules.mjs && node scripts/test-cleaning-rules.mjs',
+  'cleaning-rules': 'node scripts/test-cleaning-rules.mjs',
+  cleaning:
+    'node scripts/test-cleaning-rules.mjs && node scripts/test-recurring.mjs',
+  'recurring-rules': 'node scripts/test-recurring-rules.mjs',
   'task-rules': 'node scripts/test-task-rules.mjs',
   auth: 'node scripts/test-auth.mjs',
   household: 'node scripts/test-household.mjs',
+  recurring:
+    'node scripts/test-recurring-rules.mjs && node scripts/test-recurring.mjs',
   tasks: 'node scripts/test-task-rules.mjs && node scripts/test-tasks.mjs',
-  all: 'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-auth.mjs && node scripts/test-household.mjs && node scripts/test-tasks.mjs',
+  all: 'node scripts/test-household-rules.mjs && node scripts/test-task-rules.mjs && node scripts/test-recurring-rules.mjs && node scripts/test-cleaning-rules.mjs && node scripts/test-auth.mjs && node scripts/test-household.mjs && node scripts/test-tasks.mjs && node scripts/test-recurring.mjs',
 }
 const suite = process.argv[2]
 if (!Object.hasOwn(suites, suite))
@@ -32,7 +38,9 @@ const child = spawn(
     resolve('node_modules/firebase-tools/lib/bin/firebase.js'),
     'emulators:exec',
     '--only',
-    ['rules', 'task-rules'].includes(suite) ? 'firestore' : 'auth,firestore',
+    ['rules', 'task-rules', 'recurring-rules', 'cleaning-rules'].includes(suite)
+      ? 'firestore'
+      : 'auth,firestore',
     '--project',
     'demo-futari-kurashi',
     suites[suite],
