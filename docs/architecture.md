@@ -182,4 +182,4 @@ Firebase Hostingのliveへphase1-releaseを初回公開。標準URLはhttps://fu
 
 previewとliveは同じFirebase Auth/Firestoreへ接続するが、originが違うためログイン状態・Service Worker・ホーム画面アイコンは自動移行しない。ユーザーは本番URLへログインし直し、iPhoneでホーム画面へ追加し直す。既存のクラウドデータは引き続き使う。静的キャッシュだけを維持し、個人データの永続オフライン保存は追加しない。
 
-無料枠はAPI/Consoleの実測日時と対象期間を記録し、欠測を0としない。Hostingはプロジェクト全体、日次/月次転送と保持済み版の容量も対象。Firestore日次枠は太平洋時間基準。請求先未接続を維持し、課金・有料監視・定期バックエンドを追加しない。現在の枠内と将来の無料運用保証を区別する。本番①〜⑤は2026-10-20に本人確認済み。使用量のFirestore保存/月次送信が未取得のためPhase 1完了とは扱わない。[記録0014](./implementation-log/0014-production-release.md)と[確認手順](./release-verification.md)を参照。
+無料枠はAPI/Consoleの実測日時と対象期間を記録し、欠測を0としない。Hostingはプロジェクト全体、日次/月次転送と保持済み版の容量も対象。Firestore日次枠は太平洋時間基準。請求先未接続を維持し、課金・有料監視・定期バックエンドを追加しない。現在の枠内と将来の無料運用保証を区別する。本番①〜⑤は2026-10-20に本人確認済み。2026-10-21にFirestore保存40,947bytesを確認。月次送信量は未計測だが、ユーザー判断によりこの制約を明記してPhase 1を完了した。全指標の無料枠内を確認した意味ではない。[判断0017](./implementation-log/0017-phase1-close.md)と[測定0015](./implementation-log/0015-firestore-usage.md)を参照。[記録0014](./implementation-log/0014-production-release.md)と[確認手順](./release-verification.md)を参照。

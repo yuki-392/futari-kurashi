@@ -2,7 +2,7 @@
 
 ## 現在の状態
 
-本番公開・本人確認済み／使用量確認待ち。2026-10-20にiPhone 16 / iOS 26.2＋Mac／Chrome・既存テスト用2アカウントで本番①〜⑤「すべてok」と本人確認済み。項目11とPhase 1はまだ完了扱いにしない。[実装記録0014](./implementation-log/0014-production-release.md)を参照。
+本番公開・本人確認済み。Phase 1は2026-10-21に完了。2026-10-20にiPhone 16 / iOS 26.2＋Mac／Chrome・既存テスト用2アカウントで本番①〜⑤「すべてok」と本人確認済み。Firestore月次送信量は実測未取得であり、全無料枠の使用量を確認済みという意味ではない。ユーザー判断と制約は[記録0017](./implementation-log/0017-phase1-close.md)、公開情報は[記録0014](./implementation-log/0014-production-release.md)を参照。
 
 - 本番: https://futari-kurashi-5fcab9.web.app （期限なし）、ビルドphase1-release。
 - Hostingバージョン: da586cc22659f2a3。公開日時2026-10-20 16:22:14（日本時間）。
@@ -44,26 +44,32 @@ A=iPhone 16 / iOS 26.2、B=Mac／Chrome。既存のテスト用2アカウント�
 | 再起動/静的オフライン表示 | 成功   | 再起動成功（オフラインは対象外）  |
 | ログアウト/再ログイン     | 成功   | 成功                              |
 
-本人回答は①〜⑤「すべてok」。結果を根拠に確認済みとし、反映時間を推測しない。本人確認後の使用量（16:38:34日本時間）はHosting保存2,785,778bytes、日次転送1,976,382bytes、月次転送8,552,477bytes、Firestore日次読87/書3/削1。取得済み項目は無料枠内だが、保存容量/月次送信量は未取得のため項目11/Phase 1完了にはしない。
+本人回答は①〜⑤「すべてok」。結果を根拠に確認済みとし、反映時間を推測しない。本人確認後の使用量（16:38:34日本時間）はHosting保存2,785,778bytes、日次転送1,976,382bytes、月次転送8,552,477bytes、Firestore日次読87/書3/削1。当時の保存容量/月次送信量は未取得だった。2026-10-21の続報では保存容量を取得し、月次送信量のみ未確認（下記参照）。
+
+## 2026-10-21のFirestore再確認
+
+09:53:21.997日本時間にCloud Monitoringで保存容量を取得した。DB `(default)`/東京の`storage/data_and_index_storage_bytes`最新点09:50:00は**40,947bytes（約40KiB）**。データ＋インデックスを含む時点値で、1GiB枠の約0.003814%。保存容量の未確認は解消した。
+
+月次送信量は未取得。Firestore指標定義31件に送信バイト数はなく、Consoleも実測値を表示しなかった。[公式料金説明](https://firebase.google.com/docs/firestore/pricing)は請求データのエクスポートを案内するが、請求先未接続・Sparkを維持し、新しい課金設定は追加しない。Hostingの転送量やHTTPレスポンスサイズを代用しない。ユーザー判断により月次送信量は未計測のまま記録し、項目11/Phase 1を完了扱いにした。調査範囲・時刻・制約は[記録0015](./implementation-log/0015-firestore-usage.md)。続く[記録0016](./implementation-log/0016-firestore-egress.md)で割り当て情報の別経路も調査したが未取得。Spark向け確認経路についての問い合わせ文案を用意したが、ユーザー判断により送信しない。Phase 1は月次送信量未計測の制約を残して完了。[判断0017](./implementation-log/0017-phase1-close.md)。
 
 ## 使用量の見方
 
 [使用量と請求](https://console.firebase.google.com/project/futari-kurashi-5fcab9/usage)で正しいGoogleアカウント・プロジェクト・対象月を選ぶ。Firestoreは(default)。Consoleの集計とAPIの指標は期間や更新時点が違う場合があるので、値とともに期間/時刻/取得元を記録する。APIの欠測・反映待ちを0に置き換えない。
 
-| 対象              | 無料枠の基準                                                       | 確認先                                                                                       |
-| ----------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Hosting保存       | 10GB。実プロジェクトのAPI上限は10,737,418,240 bytes                | Hosting使用量とCloud Monitoring storage/total_bytes                                          |
-| Hosting転送       | 料金表360MB/日、説明10GB/月。Consoleは10GB/月を表示                | 日次/月次のsent_bytes_countとConsoleを両方記録                                               |
-| Firestore保存     | 1GiB（データ＋インデックス）                                       | Cloud Monitoring data_and_index_storage_bytes。欠測ならConsoleの保存量を確認                 |
-| Firestore日次操作 | 読取50,000、書込20,000、削除20,000                                 | Consoleとdocument/*_ops_count。太平洋時間の深夜リセット                                      |
-| Firestore送信     | 10GiB/月                                                           | Google CloudのFirestore割り当て/使用量。HTTPレスポンスサイズ等を課金対象送信量の代用にしない |
-| Authメール        | メール確認1,000通/日、再設定150通/日。送信制限は利用者数等でも変動 | FIREBASE_AUTH/メール・パスワードを維持。Identity Platform専用のDAU制限は適用したとみなさない |
+| 対象              | 無料枠の基準                                                       | 確認先                                                                                                          |
+| ----------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Hosting保存       | 10GB。実プロジェクトのAPI上限は10,737,418,240 bytes                | Hosting使用量とCloud Monitoring storage/total_bytes                                                             |
+| Hosting転送       | 料金表360MB/日、説明10GB/月。Consoleは10GB/月を表示                | 日次/月次のsent_bytes_countとConsoleを両方記録                                                                  |
+| Firestore保存     | 1GiB（データ＋インデックス）                                       | Cloud Monitoring data_and_index_storage_bytes。欠測ならConsoleの保存量を確認                                    |
+| Firestore日次操作 | 読取50,000、書込20,000、削除20,000                                 | Consoleとdocument/*_ops_count。太平洋時間の深夜リセット                                                         |
+| Firestore送信     | 10GiB/月                                                           | 現行Spark構成では実測取得経路が未特定。公式は請求エクスポートを案内するが今回未設定。別サービスの値で代用しない |
+| Authメール        | メール確認1,000通/日、再設定150通/日。送信制限は利用者数等でも変動 | FIREBASE_AUTH/メール・パスワードを維持。Identity Platform専用のDAU制限は適用したとみなさない                    |
 
 Hostingの上限はプロジェクト全体で、preview/本番/保持済みリリースを合算する。ドメイン別のDELTAを期間内で合算し、GAUGEは時点値として扱う。同じ上限が各ドメインにあっても上限を足し合わせない。monthly_sentの古いドメイン別値を足して現在の月間総量とみなさない。
 
 最初の利用量観測は記録0014。本人確認後も同じ方法で読み戻す。現在の実測が枠内でも将来の継続無料を保証しない。運用中はまず使用量と請求画面で枠への比率を確認し、増えた場合は対象期間・不要な画面の購読解除・大量取得/再接続・Hosting転送/保持済み版を調べる。今回、定期自動監視・有料アラート・課金先を追加しない。上限接近時も自動課金へ切り替えず、原因と運用を見直す。
 
-根拠: [料金表](https://firebase.google.com/pricing)、[Hosting](https://firebase.google.com/docs/hosting/usage-quotas-pricing)、[Firestore](https://firebase.google.com/docs/firestore/quotas)、[Auth](https://firebase.google.com/docs/auth/limits)、[Cloud Monitoringの指標](https://docs.cloud.google.com/monitoring/api/metrics_gcp_d_h)。確認日2026-10-20。
+根拠: [料金表](https://firebase.google.com/pricing)、[Hosting](https://firebase.google.com/docs/hosting/usage-quotas-pricing)、[Firestore](https://firebase.google.com/docs/firestore/quotas)、[Auth](https://firebase.google.com/docs/auth/limits)、[Cloud Monitoringの指標](https://docs.cloud.google.com/monitoring/api/metrics_gcp_d_h)。確認日2026-10-20、Firestoreの再確認2026-10-21。
 
 ## 公開不具合時の復旧
 

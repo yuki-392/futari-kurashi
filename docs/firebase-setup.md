@@ -146,4 +146,4 @@ Emulator無効・識別子declutter-checkで既存pwa-checkへ7日間検証公�
 
 公開前後でSpark/請求先未接続・FIREBASE_AUTHのメール/パスワード・承認済みドメイン・Rulesソース/SHA・全13インデックスREADY・fieldOverrides=[]を照合し、変更なし。本番web.appとfirebaseapp.comはAuth承認済みで追加不要だった。Rules/インデックス/Auth/既存データのデプロイや削除は行わず、Hostingだけを公開した。
 
-利用量はCloud Monitoring APIとFirebase/Google Cloud Consoleで期間を明示して記録する。Hosting保存/日次・月次転送とFirestoreの日次操作は観測できた。Firestore保存容量と月次送信量は数値未取得のため、枠内と断定しない。2026-10-20に本番①〜⑤を本人確認し、本人確認後にも再観測済み。取得済み指標は枠内だがFirestore保存/月次送信は未取得。本番公開・本人確認済み／使用量確認待ち。手順・復旧・上限は[公開確認手順](./release-verification.md)、観測値と理由は[記録0014](./implementation-log/0014-production-release.md)を参照。
+利用量はCloud Monitoring APIとFirebase/Google Cloud Consoleで期間を明示して記録する。Hosting保存/日次・月次転送とFirestoreの日次操作は観測できた。2026-10-20時点ではFirestore保存容量と月次送信量は未取得だった。2026-10-20に本番①〜⑤を本人確認し、本人確認後にも再観測済み。2026-10-21にFirestore保存40,947bytesを取得し1GiB枠内と確認。月次送信量は未計測で枠内とは断定しない。ユーザー判断により未計測の制約を記録してPhase 1を完了した。[測定0015](./implementation-log/0015-firestore-usage.md)、[判断0017](./implementation-log/0017-phase1-close.md)を参照。本番公開・本人確認済み。手順・復旧・上限は[公開確認手順](./release-verification.md)、観測値と理由は[記録0014](./implementation-log/0014-production-release.md)を参照。

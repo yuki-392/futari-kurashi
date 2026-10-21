@@ -2,7 +2,7 @@
 
 **家事も、お金も、ふたりで。**
 
-同棲カップル2人向けの生活管理PWAです。Phase 1の認証・世帯共有・ホーム/6画面・ToDo・繰り返し家事/掃除・買い物・断捨離は実装とiPhone＋Macでの本人確認まで完了しました。項目11で[本番URL](https://futari-kurashi-5fcab9.web.app)へ初回公開済みです。本番での①〜⑤は2026-10-20に本人確認済みで、現在は使用量の不足指標を確認待ちとして、Phase 1は完了扱いにしていません。
+同棲カップル2人向けの生活管理PWAです。Phase 1の認証・世帯共有・ホーム/6画面・ToDo・繰り返し家事/掃除・買い物・断捨離は実装とiPhone＋Macでの本人確認まで完了しました。項目11で[本番URL](https://futari-kurashi-5fcab9.web.app)へ初回公開済みです。本番での①〜⑤は2026-10-20に本人確認済みで、2026-10-21にFirestore保存40,947bytesを確認し、Firestore月次送信量は実測できていない旨を記録したうえで、2026-10-21にPhase 1を完了しました。これは無料枠内の全指標を実測確認したことや将来の無料運用を保証するものではありません。[判断記録0017](./docs/implementation-log/0017-phase1-close.md)を参照してください。
 
 本番の識別子は`phase1-release`、期限はありません。プレビューと同じAuth/Firestoreを使用しますが、ブラウザーの保存先は別なのでログイン・iPhoneのホーム画面追加をやり直してください。[公開・使用量確認手順](./docs/release-verification.md)と[記録0014](./docs/implementation-log/0014-production-release.md)を参照してください。
 

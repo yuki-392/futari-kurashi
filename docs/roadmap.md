@@ -1,6 +1,6 @@
 # 開発計画と実装状況
 
-更新日: 2026-10-20
+更新日: 2026-10-21
 
 ## 実装の進め方
 
@@ -17,7 +17,7 @@
 - 製品仕様・開発ガイド・設計方針の文書化
 - ローカルGitの初期化
 
-これらは環境構築時に用意した開発基盤です。その後の認証・世帯機能の進捗は以下のPhase 1を参照してください。環境構築時点では各種リスト・ダッシュボードは未実装でした。環境構築後に専用Firebaseプロジェクトを作成し、PWA確認用のビルドAをHostingプレビューチャネルへ公開しました（[実装記録0003](./implementation-log/0003-pwa-iphone.md)）。GitHub Privateリポジトリの作成・接続は未実施です。本番Hostingは項目11で初回公開・本人確認済みで、使用量の不足指標を確認待ちです。
+これらは環境構築時に用意した開発基盤です。その後の認証・世帯機能の進捗は以下のPhase 1を参照してください。環境構築時点では各種リスト・ダッシュボードは未実装でした。環境構築後に専用Firebaseプロジェクトを作成し、PWA確認用のビルドAをHostingプレビューチャネルへ公開しました（[実装記録0003](./implementation-log/0003-pwa-iphone.md)）。GitHub Privateリポジトリの作成・接続は未実施です。本番Hostingは項目11で初回公開・本人確認済みです。Phase 1はユーザー判断により、Firestore月次送信量が未計測である制約を残して完了しています。
 
 ### 環境構築時の検証結果
 
@@ -45,9 +45,11 @@
 - [x] 項目8B：掃除場所別スケジュール・担当ローテーション。既存繰り返しを拡張し、今日/今週・場所絞り込み、完了ごとに交代・取消で復元。93単体テスト・全Emulator統合・PWA検証が成功し、Rules/インデックス反映とcleaning-checkの検証公開済み。2026-10-20にiPhone＋Macの①〜⑤すべてokと本人確認し項目8B完了。[記録0011](./implementation-log/0011-cleaning.md)
 - [x] 項目9：共有買い物リスト。通常リストとホーム最大5件を実装。103単体テスト・全Emulator統合・PWA検証が成功し、Rules/インデックス反映とshopping-check検証公開済み。2026-10-20にiPhone＋Macの①〜⑤すべてokと本人確認し項目9完了。正確な未購入総件数は今回対象外。定期購入品は別項目、家計連携はPhase 2。[記録0012](./implementation-log/0012-shopping.md)
 - [x] 項目10：共有断捨離リスト。未処分/処分済み・方法/所有者/期限とホーム最大5件を実装。120単体テスト・全Emulator統合・PWAが成功。Rulesソース一致・全13インデックスREADYを確認し、declutter-checkを検証公開済み。2026-10-20にiPhone 16 / iOS 26.2＋Mac／Chrome・既存のテスト用2アカウントで①〜⑤「すべてok」と本人確認済み。反映時間は未申告。項目10完了。[記録0013](./implementation-log/0013-declutter.md)
-- [ ] 項目11：Firebase Hosting本番公開・無料枠内の利用量確認。phase1-releaseを標準URLへ初回公開済み。本番①〜⑤は2026-10-20に「すべてok」と本人確認済み。使用量のFirestore保存/月次送信は未取得で確認待ち。[記録0014](./implementation-log/0014-production-release.md)
+- [x] 項目11：Firebase Hosting本番公開・利用量確認。phase1-releaseを標準URLへ公開し、本番①〜⑤を2026-10-20に「すべてok」と本人確認済み。HostingとFirestoreの日次使用量を確認。2026-10-21にFirestore保存40,947bytesを1GiB枠内と確認。Firestore月次送信量は実測できず未計測。ユーザー判断で問い合わせを省略し、この制約を明示して項目11・Phase 1を完了。[判断0017](./implementation-log/0017-phase1-close.md)、[調査0015](./implementation-log/0015-firestore-usage.md)、[調査0016](./implementation-log/0016-firestore-egress.md)、[公開記録0014](./implementation-log/0014-production-release.md)
 
 ## Phase 2：生活管理機能の充実
+
+Phase 1は2026-10-21に完了しました。Phase 2には着手していません。
 
 - [ ] 手動の収入・支出・カテゴリ管理
 - [ ] 月間・カテゴリ別予算
