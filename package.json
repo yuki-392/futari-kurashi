@@ -29,7 +29,8 @@
     "test:shopping": "node scripts/run-emulators.mjs shopping",
     "test:cleaning": "node scripts/run-emulators.mjs cleaning",
     "test:recurring": "node scripts/run-emulators.mjs recurring",
-    "test:tasks": "node scripts/run-emulators.mjs tasks"
+    "test:tasks": "node scripts/run-emulators.mjs tasks",
+    "test:finance": "node scripts/run-emulators.mjs finance"
   },
   "dependencies": {
     "firebase": "13.0.0",

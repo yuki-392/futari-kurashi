@@ -375,6 +375,84 @@ service cloud.firestore {
         && declutterCompletion(resource.data,request.resource.data);
       allow delete: if taskMember(hid);
     }
+    function financeCategoryPath(hid,id) {
+      return /databases/$(database)/documents/households/$(hid)/financeCategories/$(id);
+    }
+    function financeStandardId(id) {
+      return id in ['income_salary','income_bonus','income_other','expense_food','expense_daily','expense_housing','expense_utilities','expense_communication','expense_transport','expense_furniture','expense_medical','expense_entertainment','expense_other'];
+    }
+    function validFinanceCategory(hid,id,data) {
+      return data.keys().hasAll(['type','name','archived','standard','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['type','name','archived','standard','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.type in ['income','expense']
+        && data.name is string && data.name == data.name.trim() && data.name.matches('(?s).{1,40}')
+        && data.archived is bool && data.standard is bool
+        && (data.standard ? financeStandardId(id) : !financeStandardId(id))
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedAt == request.time && data.updatedBy == request.auth.uid
+        && (data.standard ? (
+          (id == 'income_salary' && data.type == 'income') || (id == 'income_bonus' && data.type == 'income') || (id == 'income_other' && data.type == 'income')
+          || (id == 'expense_food' && data.type == 'expense') || (id == 'expense_daily' && data.type == 'expense') || (id == 'expense_housing' && data.type == 'expense')
+          || (id == 'expense_utilities' && data.type == 'expense') || (id == 'expense_communication' && data.type == 'expense') || (id == 'expense_transport' && data.type == 'expense')
+          || (id == 'expense_furniture' && data.type == 'expense') || (id == 'expense_medical' && data.type == 'expense') || (id == 'expense_entertainment' && data.type == 'expense') || (id == 'expense_other' && data.type == 'expense')
+        ) : true);
+    }
+    function initialFinanceCategoryName(id,data) {
+      return (id == 'income_salary' && data.name == '給与') || (id == 'income_bonus' && data.name == '賞与') || (id == 'income_other' && data.name == 'その他' && data.type == 'income')
+        || (id == 'expense_food' && data.name == '食費') || (id == 'expense_daily' && data.name == '日用品') || (id == 'expense_housing' && data.name == '住居費')
+        || (id == 'expense_utilities' && data.name == '水道光熱費') || (id == 'expense_communication' && data.name == '通信費') || (id == 'expense_transport' && data.name == '交通費')
+        || (id == 'expense_furniture' && data.name == '家具家電') || (id == 'expense_medical' && data.name == '医療') || (id == 'expense_entertainment' && data.name == '娯楽') || (id == 'expense_other' && data.name == 'その他' && data.type == 'expense');
+    }
+    function validFinanceEntry(hid,data,allowArchived,oldCategoryId) {
+      let category = get(financeCategoryPath(hid,data.categoryId)).data;
+      return data.keys().hasAll(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.type in ['income','expense']
+        && data.title is string && data.title == data.title.trim() && data.title.matches('(?s).{1,100}')
+        && data.amount is int && data.amount >= 1 && data.amount <= 999999999
+        && recValidDate(data.date)
+        && data.categoryId is string && exists(financeCategoryPath(hid,data.categoryId))
+        && category.type == data.type && (!category.archived || (allowArchived && data.categoryId == oldCategoryId))
+        && data.memo is string && data.memo == data.memo.trim() && data.memo.matches('(?s).{0,500}')
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedAt == request.time && data.updatedBy == request.auth.uid;
+    }
+    match /households/{hid}/financeCategories/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 100;
+      allow create: if taskMember(hid) && validFinanceCategory(hid,id,request.resource.data)
+        && request.resource.data.version == 1 && !request.resource.data.archived
+        && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid
+        && (!request.resource.data.standard || initialFinanceCategoryName(id,request.resource.data));
+      allow update: if taskMember(hid) && validFinanceCategory(hid,id,request.resource.data)
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.type == resource.data.type && request.resource.data.standard == resource.data.standard
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','archived','version','updatedAt','updatedBy']);
+      allow delete: if false;
+    }
+    match /households/{hid}/incomes/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10000;
+      allow create: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,false,null) && request.resource.data.type == 'income'
+        && request.resource.data.version == 1 && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,true,resource.data.categoryId) && request.resource.data.type == 'income'
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if taskMember(hid);
+    }
+    match /households/{hid}/expenses/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10000;
+      allow create: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,false,null) && request.resource.data.type == 'expense'
+        && request.resource.data.version == 1 && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,true,resource.data.categoryId) && request.resource.data.type == 'expense'
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if taskMember(hid);
+    }
     // 未実装の業務データは引き続き全拒否。
     match /{document=**} { allow read, write: if false; }
   }

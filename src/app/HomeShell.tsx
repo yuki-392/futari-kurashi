@@ -5,6 +5,7 @@ import { ChoresPanel } from '../features/recurring-tasks/ChoresPanel'
 import { HomePanel } from '../features/home/HomePanel'
 import { HouseholdPanel } from '../features/household/HouseholdPanel'
 import { AccountControls } from '../features/auth/AccountControls'
+import { FinancePanel } from '../features/finance/FinancePanel'
 import { pages, usePage } from './navigation'
 
 export function HomeShell() {
@@ -36,6 +37,8 @@ export function HomeShell() {
           <HouseholdPanel />
           <AccountControls />
         </>
+      ) : page.id === 'finances' ? (
+        <FinancePanel />
       ) : (
         <section className="rounded-3xl border border-line bg-white p-6">
           <p role="status" className="font-semibold text-forest">

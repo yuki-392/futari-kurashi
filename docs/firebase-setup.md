@@ -147,3 +147,9 @@ Emulator無効・識別子declutter-checkで既存pwa-checkへ7日間検証公�
 公開前後でSpark/請求先未接続・FIREBASE_AUTHのメール/パスワード・承認済みドメイン・Rulesソース/SHA・全13インデックスREADY・fieldOverrides=[]を照合し、変更なし。本番web.appとfirebaseapp.comはAuth承認済みで追加不要だった。Rules/インデックス/Auth/既存データのデプロイや削除は行わず、Hostingだけを公開した。
 
 利用量はCloud Monitoring APIとFirebase/Google Cloud Consoleで期間を明示して記録する。Hosting保存/日次・月次転送とFirestoreの日次操作は観測できた。2026-10-20時点ではFirestore保存容量と月次送信量は未取得だった。2026-10-20に本番①〜⑤を本人確認し、本人確認後にも再観測済み。2026-10-21にFirestore保存40,947bytesを取得し1GiB枠内と確認。月次送信量は未計測で枠内とは断定しない。ユーザー判断により未計測の制約を記録してPhase 1を完了した。[測定0015](./implementation-log/0015-firestore-usage.md)、[判断0017](./implementation-log/0017-phase1-close.md)を参照。本番公開・本人確認済み。手順・復旧・上限は[公開確認手順](./release-verification.md)、観測値と理由は[記録0014](./implementation-log/0014-production-release.md)を参照。
+
+## Phase 2・項目1: 家計の検証環境
+
+家計用Rulesと3件の複合インデックス（financeCategories/type、incomes/date+createdAt、expenses/date+createdAt）を専用プロジェクトへ反映します。finance-checkは本番とは別のHosting previewですが、Auth/Firestoreと既存テスト世帯は本番と共有します。previewの期限が切れてもFirestore・Rules・データは残ります。公開後はテスト用明細だけを使い、本人確認手順は[家計検証手順](./finance-verification.md)、公開情報は[記録0018](./implementation-log/0018-finance-records.md)を参照してください。本番Hostingには公開しません。
+
+家計用 `finance-check` は既存 `pwa-check` を更新して公開済み（Hosting version `186199409d859a57`、期限2026-10-28 13:34 JST）。Firestore Ruleset `b286350e-4529-464e-a332-1435bcac493d` はローカルの`firestore.rules`と一致し、家計用を含む15件の複合インデックスはすべてREADY。previewの接続先は本番と同じFirestoreです。[記録0018](./implementation-log/0018-finance-records.md)を参照してください。

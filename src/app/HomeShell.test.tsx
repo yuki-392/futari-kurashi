@@ -92,7 +92,7 @@ it('直接アクセス、画面変更、履歴イベント、不明な画面と�
   expect(screen.getByRole('heading', { name: '買い物' })).toBeTruthy()
   expect(screen.getByLabelText('商品名')).toBeTruthy()
   await route('#/finances')
-  expect(screen.getByText(/Phase 2/)).toBeTruthy()
+  expect(screen.getByRole('heading', { name: '家計' })).toBeTruthy()
   expect(document.activeElement).toBe(
     screen.getByRole('heading', { name: '家計' }),
   )

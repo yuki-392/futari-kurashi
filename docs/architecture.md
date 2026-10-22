@@ -23,7 +23,7 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 ## 世帯データの構成（所属・招待・ToDoを実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9、declutterItemsは項目10で実装し、それ以外は設計候補・未実装です。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9、declutterItemsは項目10で実装し、financeCategories/incomes/expensesはPhase 2項目1で実装済み。それ以外は設計候補・未実装です。
 
 ```text
 users/{uid}                         本人の所属（プロフィールは未実装）
@@ -34,8 +34,9 @@ households/{householdId}             世帯とメンバー（上限2人）
   recurringCompletions/{historyId}   実施履歴・取消記録
   shoppingItems/{itemId}             買い物
   declutterItems/{itemId}            断捨離
-  expenses/{expenseId}               Phase 2: 支出
-  incomes/{incomeId}                 Phase 2: 収入
+  financeCategories/{categoryId}     収入・支出カテゴリ
+  expenses/{expenseId}               支出記録
+  incomes/{incomeId}                 収入記録
   budgets/{budgetId}                 Phase 2: 月間・カテゴリ予算
   houseRules/{ruleId}                Phase 2: 家のルール
 ```
@@ -183,3 +184,9 @@ Firebase Hostingのliveへphase1-releaseを初回公開。標準URLはhttps://fu
 previewとliveは同じFirebase Auth/Firestoreへ接続するが、originが違うためログイン状態・Service Worker・ホーム画面アイコンは自動移行しない。ユーザーは本番URLへログインし直し、iPhoneでホーム画面へ追加し直す。既存のクラウドデータは引き続き使う。静的キャッシュだけを維持し、個人データの永続オフライン保存は追加しない。
 
 無料枠はAPI/Consoleの実測日時と対象期間を記録し、欠測を0としない。Hostingはプロジェクト全体、日次/月次転送と保持済み版の容量も対象。Firestore日次枠は太平洋時間基準。請求先未接続を維持し、課金・有料監視・定期バックエンドを追加しない。現在の枠内と将来の無料運用保証を区別する。本番①〜⑤は2026-10-20に本人確認済み。2026-10-21にFirestore保存40,947bytesを確認。月次送信量は未計測だが、ユーザー判断によりこの制約を明記してPhase 1を完了した。全指標の無料枠内を確認した意味ではない。[判断0017](./implementation-log/0017-phase1-close.md)と[測定0015](./implementation-log/0015-firestore-usage.md)を参照。[記録0014](./implementation-log/0014-production-release.md)と[確認手順](./release-verification.md)を参照。
+
+## 家計の記録（Phase 2・項目1）
+
+`src/features/finance/`に検証・Firestoreサービス・購読・フォーム・月別表示をまとめる。標準カテゴリは世帯ごとにtransactionで冪等初期化する。カテゴリ文書は`financeCategories/{categoryId}`でtype/name/archived/standard/versionと監査項目を持つ。収入・支出は`incomes/{id}`と`expenses/{id}`に分け、type、title、amount（1〜999,999,999円の整数）、date（日本日付）、categoryId、memo（最大500文字）、version、監査情報を保存する。
+
+月別一覧は日付降順・作成日時降順のクエリを種類ごとに購読し、最大10,000件までを対象に収入・支出合計を算出する。上限に達した場合は合計が取得範囲内である旨を表示する。更新/削除はトランザクションで版を照合し、アーカイブカテゴリは既存明細の同カテゴリ維持に限り更新で利用できる。カテゴリは削除せずアーカイブし、過去の分類を保つ。確認済み同世帯メンバーのみが上限付きでアクセスできる。予算、支払者、負担割合、精算、買い物連携、ホームの金額表示は未実装。[記録0018](./implementation-log/0018-finance-records.md)・[確認手順](./finance-verification.md)を参照。
