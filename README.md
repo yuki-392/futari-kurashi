@@ -125,3 +125,11 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 家計画面で月を切り替え、収入・支出明細の登録・編集・確認付き削除と月別合計を確認できます。標準カテゴリは初回利用時に世帯へ一度だけ登録し、世帯独自カテゴリの追加・名称変更・アーカイブができます。アーカイブ済みカテゴリは新規入力から外れ、過去明細の表示には残ります。金額は1円以上の整数、メモは任意です。予算・精算・支払者/負担割合・買い物連携は後続項目です。
 
 `npm run test:finance`はRulesと2ブラウザーの共有・カテゴリ・月別合計を検証します。`npm run test:integration`には家計の検証を含みます。Cloud Rulesはローカルと一致し、全15インデックスREADYです。finance-check（version 186199409d859a57、期限2026-10-28 13:34 JST）をpwa-checkへ公開しました。本番Hostingは変更していません。確認方法は[家計検証手順](./docs/finance-verification.md)、変更理由は[記録0018](./docs/implementation-log/0018-finance-records.md)を参照してください。
+
+## 月間・カテゴリ別予算（Phase 2・項目2）
+
+家計の「予算」で、表示月の月全体・支出カテゴリ別予算を独立して設定します。金額は0円以上の整数。予算未設定と0円を区別し、実績/残額/超過額を表示します。超過しても支出登録は可能です。前月コピーは未設定部分だけを埋め、既存予算や0円を保持します。アーカイブカテゴリは既存の予算・実績を確認/解除でき、新規設定やコピーの対象から外れます。ホームは今月の支出と月予算・残額を表示します。
+
+ローカル検証は`npm run test:finance`（家計/予算Rulesと2ブラウザー）、全回帰検証は`npm run test:integration`と`npm run test:pwa`を実行します。[予算確認手順](./docs/budget-verification.md)・[実装記録0019](./docs/implementation-log/0019-budgets.md)を参照してください。前項目はR1の合計更新修正も2026-10-22に本人確認済みです。
+
+budget-checkを[検証URL](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み（version 0e4cdcf8cf4a85f9、期限2026-10-29 09:20 JST）。143単体・全Emulator統合・PWA検証と公開匿名smokeが成功し、Rulesソース一致・全15索引READYを確認。本番Hostingは変更していません。2026-10-22にiPhone＋Macの案内①〜⑥「すべてok」と本人確認済みで、項目2は完了です。

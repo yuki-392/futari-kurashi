@@ -77,7 +77,7 @@ npm run dev:emulator
 - Authentication: `127.0.0.1:9099` / Firestore: `127.0.0.1:8080`
 - Hosting: [http://127.0.0.1:5000](http://127.0.0.1:5000)（先にビルドした内容）
 - Vite開発サーバーは通常`http://localhost:5173`。将来SDKを利用する機能は`getFirebaseServices()`経由でEmulatorに接続します。
-- ローカルのルールは確認済みユーザーの世帯・所属・招待を限定許可します。ToDo・繰り返し/掃除・買い物・断捨離の業務パスは各項目で検証済みの限定権限を追加し、未実装パスは全拒否です。各項目で同じRulesをクラウドにも反映済みです。
+- ローカルのルールは確認済みユーザーの世帯・所属・招待を限定許可します。ToDo・繰り返し/掃除・買い物・断捨離・収支/カテゴリ・予算の業務パスは各項目で検証済みの限定権限を追加し、未実装パスは全拒否です。各項目で同じRulesをクラウドにも反映済みです。
 - EmulatorはPC自身のloopbackで待ち受けます。この設定ではiPhoneからEmulatorには接続できません。
 - データのexport/import指定はしていません。終了後のデータ保持を前提にしないでください。
 
@@ -153,3 +153,11 @@ Emulator無効・識別子declutter-checkで既存pwa-checkへ7日間検証公�
 家計用Rulesと3件の複合インデックス（financeCategories/type、incomes/date+createdAt、expenses/date+createdAt）を専用プロジェクトへ反映します。finance-checkは本番とは別のHosting previewですが、Auth/Firestoreと既存テスト世帯は本番と共有します。previewの期限が切れてもFirestore・Rules・データは残ります。公開後はテスト用明細だけを使い、本人確認手順は[家計検証手順](./finance-verification.md)、公開情報は[記録0018](./implementation-log/0018-finance-records.md)を参照してください。本番Hostingには公開しません。
 
 家計用 `finance-check` は既存 `pwa-check` を更新して公開済み（Hosting version `186199409d859a57`、期限2026-10-28 13:34 JST）。Firestore Ruleset `b286350e-4529-464e-a332-1435bcac493d` はローカルの`firestore.rules`と一致し、家計用を含む15件の複合インデックスはすべてREADY。previewの接続先は本番と同じFirestoreです。[記録0018](./implementation-log/0018-finance-records.md)を参照してください。
+
+## Phase 2・項目2: 予算
+
+予算用Rulesを既存世帯内権限へ追加する。クラウド現行Rules/参照情報はGit対象外`.tools.local/rules-backups/0019-before`へ保存。新クエリはbudgetsのmonth単一フィールド条件、ホームは月全体予算の文書取得で、追加の複合インデックスは不要。既存15インデックスとfieldOverrides=[]を維持する。Rules反映後にローカルソース一致とREADYを確認し、Emulator=false・budget-checkで既存pwa-checkへ7日間公開する。previewは本番と同じAuth/Firestoreへ接続し、期限後も予算文書とRulesは残る。本番live Hostingは更新しない。[記録0019](./implementation-log/0019-budgets.md)と[予算確認手順](./budget-verification.md)を参照する。
+
+2026-10-22にbudget-checkをpwa-checkへ公開済み。Hosting version 0e4cdcf8cf4a85f9、期限2026-10-29 09:20 JST。公開Ruleset ded7152e-3fb3-49c5-be8f-0710b6d1e1f0はローカルと完全一致。15インデックスの定義一致・READY、fieldOverrides=[]、請求先未接続を読み戻し確認。本番liveの版da586cc22659f2a3を維持した。
+
+2026-10-22にiPhone＋Macの予算確認案内①〜⑥を本人が「すべてok」と回答し、項目2完了。公開後の設定変更・追加デプロイ・データ削除は行っていない。

@@ -18,3 +18,7 @@
 - `npm run test:finance`:架空ユーザーだけを使うAuth/Firestore Emulatorと2つのPlaywrightブラウザー。
 - `npm run test:integration`:全機能のEmulator Rules/統合検証。
 - `npm run test:pwa`: Service Worker、更新延期/適用、オフライン静的画面。
+
+## 本人確認結果
+
+2026-10-21に全項目OKとの回答と、合計が画面遷移まで更新されない指摘R1を受領。R1を修正したfinance-check version 186199409d859a57について、2026-10-22に「確認もok。次いこう」と本人確認済み。項目1は完了。既報端末iPhone 16 / iOS 26.2＋Mac／Chrome（変更申告なし）を継続。

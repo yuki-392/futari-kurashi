@@ -250,17 +250,27 @@ export function watchFinanceCategories(
 export function watchFinanceEntries(
   householdId: string,
   options: FinanceEntryQuery,
-  next: (items: FinanceEntry[]) => void,
+  next: (items: FinanceEntry[], complete: boolean) => void,
   error: () => void,
 ) {
   let active = true
   let stop: (() => void) | undefined
+  let failed = false
+  const fail = () => {
+    if (active && !failed) {
+      failed = true
+      error()
+    }
+  }
   void getFirebaseServices()
     .then(({ db }) => {
       if (!active) return
       const { from, through } = monthBounds(options.month)
-      const entries: FinanceEntry[] = []
-      const stops = (['incomes', 'expenses'] as const).map((name) =>
+      const names = options.type
+        ? [options.type === 'income' ? 'incomes' : 'expenses']
+        : ['incomes', 'expenses']
+      const snapshots = new Map<string, FinanceEntry[]>()
+      const stops = names.map((name) =>
         onSnapshot(
           query(
             collection(db, 'households', householdId, name),
@@ -273,45 +283,42 @@ export function watchFinanceEntries(
           { includeMetadataChanges: true },
           (snapshot) => {
             if (
+              !active ||
+              failed ||
               snapshot.metadata.hasPendingWrites ||
               snapshot.metadata.fromCache
             )
               return
-            const remaining = entries.filter(
-              (item) =>
-                (item.type === 'income' ? 'incomes' : 'expenses') !== name,
-            )
-            entries.splice(
-              0,
-              entries.length,
-              ...remaining,
-              ...snapshot.docs.map(
+            snapshots.set(
+              name,
+              snapshot.docs.map(
                 (item) =>
                   ({
                     ...item.data(),
-                    type: name === 'incomes' ? 'income' : 'expense',
                     id: item.id,
+                    type: name === 'incomes' ? 'income' : 'expense',
                   }) as FinanceEntry,
               ),
             )
+            if (snapshots.size !== names.length) return
+            const groups = [...snapshots.values()]
             next(
-              [...entries].sort(
-                (a, b) =>
-                  b.date.localeCompare(a.date) ||
-                  dateMillis(b.createdAt) - dateMillis(a.createdAt),
-              ),
+              groups
+                .flat()
+                .sort(
+                  (a, b) =>
+                    b.date.localeCompare(a.date) ||
+                    dateMillis(b.createdAt) - dateMillis(a.createdAt),
+                ),
+              groups.every((items) => items.length < 10000),
             )
           },
-          () => {
-            if (active) error()
-          },
+          fail,
         ),
       )
       stop = () => stops.forEach((unsubscribe) => unsubscribe())
     })
-    .catch(() => {
-      if (active) error()
-    })
+    .catch(fail)
   return () => {
     active = false
     stop?.()

@@ -1,3 +1,4 @@
+import { BudgetPanel } from './BudgetPanel'
 import { useMemo, useState } from 'react'
 import { useHousehold } from '../household/context'
 import { useOnline } from '../tasks/useTasks'
@@ -14,7 +15,7 @@ import { financeMessage, formatYen, monthTotals } from './model'
 import type { FinanceCategory, FinanceEntry, FinanceType } from './model'
 import { useFinanceCategories, useFinanceEntries } from './useFinance'
 
-type View = 'entries' | 'categories'
+type View = 'entries' | 'categories' | 'budgets'
 
 export function FinancePanel() {
   const { uid, household } = useHousehold()
@@ -24,7 +25,11 @@ export function FinancePanel() {
   const [view, setView] = useState<View>('entries')
   const [editing, setEditing] = useState<FinanceEntry | null>(null)
   const categories = useFinanceCategories()
-  const entries = useFinanceEntries(month, view === 'entries')
+  const entries = useFinanceEntries(
+    month,
+    view !== 'categories',
+    view === 'budgets' ? 'expense' : undefined,
+  )
   const totals = useMemo(() => monthTotals(entries.entries), [entries.entries])
   const [message, setMessage] = useState('')
   const [deleting, setDeleting] = useState<FinanceEntry | null>(null)
@@ -144,8 +149,56 @@ export function FinancePanel() {
         >
           カテゴリ管理
         </button>
+        <button
+          role="tab"
+          aria-selected={view === 'budgets'}
+          className={
+            view === 'budgets'
+              ? 'task-primary'
+              : 'rounded-xl border border-line px-4 py-3'
+          }
+          onClick={() => {
+            setView('budgets')
+            setEditing(null)
+            setDeleting(null)
+          }}
+        >
+          予算
+        </button>
       </div>
-      {view === 'entries' ? (
+      {view === 'budgets' ? (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              className="min-h-11 rounded-xl border border-line px-3"
+              disabled={month === '1000-01'}
+              aria-label="前の月"
+              onClick={() => moveMonth(-1)}
+            >
+              前月
+            </button>
+            <h2 className="text-lg font-bold">{month.replace('-', '年')}月</h2>
+            <button
+              className="min-h-11 rounded-xl border border-line px-3"
+              disabled={month === '9999-12'}
+              aria-label="次の月"
+              onClick={() => moveMonth(1)}
+            >
+              翌月
+            </button>
+          </div>
+          <BudgetPanel
+            key={month}
+            month={month}
+            categories={categories.categories}
+            entries={entries.entries}
+            complete={entries.complete}
+            ready={entries.status === 'ready'}
+            error={entries.status === 'error'}
+            onRetry={entries.retry}
+          />
+        </>
+      ) : view === 'entries' ? (
         <>
           <section aria-label="月別の収支">
             <div className="mb-4 flex items-center justify-between gap-2">
@@ -171,13 +224,17 @@ export function FinancePanel() {
               <p className="rounded-2xl bg-white p-4">
                 収入合計{' '}
                 <strong className="mt-2 block text-lg">
-                  {entries.status === 'ready' ? formatYen(totals.income) : '—'}
+                  {entries.status === 'ready'
+                    ? `${formatYen(totals.income)}${entries.complete ? '' : '（取得範囲）'}`
+                    : '—'}
                 </strong>
               </p>
               <p className="rounded-2xl bg-white p-4">
                 支出合計{' '}
                 <strong className="mt-2 block text-lg">
-                  {entries.status === 'ready' ? formatYen(totals.expense) : '—'}
+                  {entries.status === 'ready'
+                    ? `${formatYen(totals.expense)}${entries.complete ? '' : '（取得範囲）'}`
+                    : '—'}
                 </strong>
               </p>
             </div>
@@ -257,9 +314,9 @@ export function FinancePanel() {
                 この月の明細はありません。
               </p>
             )}
-            {entries.entries.length >= 10000 ? (
+            {entries.status === 'ready' && !entries.complete ? (
               <p role="status" className="mt-3 text-sm text-muted">
-                この月の明細は表示上限に達しました。合計は取得した10,000件までを対象にしています。
+                この月の明細は表示上限に達しました。合計は収入・支出それぞれ取得した10,000件までを対象にしています。
               </p>
             ) : null}
           </section>

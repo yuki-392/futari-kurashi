@@ -1,3 +1,4 @@
+import { HomeFinance } from '../finance/HomeFinance'
 import { HomeDeclutter } from '../declutter/DeclutterPanel'
 import { HomeShopping } from '../shopping/ShoppingPanel'
 import { TodayRecurring } from '../recurring-tasks/RecurringPanels'
@@ -35,6 +36,7 @@ export function HomePanel() {
           </a>
         ) : null}
       </section>
+      <HomeFinance />
       <TodayTasks />
       <TodayRecurring />
       <HomeShopping />
@@ -62,7 +64,7 @@ export function HomePanel() {
                     : page.id === 'shopping'
                       ? '買うものを共有'
                       : page.id === 'finances'
-                        ? 'Phase 2で追加予定'
+                        ? '収支・予算を確認'
                         : '処分候補を共有'}
               </span>
             </a>

@@ -37,7 +37,7 @@ households/{householdId}             世帯とメンバー（上限2人）
   financeCategories/{categoryId}     収入・支出カテゴリ
   expenses/{expenseId}               支出記録
   incomes/{incomeId}                 収入記録
-  budgets/{budgetId}                 Phase 2: 月間・カテゴリ予算
+  budgets/{budgetId}                 月間・カテゴリ予算
   houseRules/{ruleId}                Phase 2: 家のルール
 ```
 
@@ -52,7 +52,7 @@ households/{householdId}             世帯とメンバー（上限2人）
 
 ## セキュリティ
 
-リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDo・繰り返し定義と履歴・買い物を限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
+リポジトリの`firestore.rules`は本人の所属・世帯・招待・世帯内ToDo・繰り返し定義と履歴・買い物・断捨離・収支/カテゴリ・予算を限定許可し、それ以外のパスを全拒否にしています。メール確認済みであることをRulesでも必須とし、他世帯・メンバー改ざん・3人目・二重所属を拒否します。Firestore Emulatorと`@firebase/rules-unit-testing`で検証します。項目5で東京のFirestoreを新規作成し、同じRulesをクラウドへ反映・ソース照合済みです。
 
 FirebaseのWebアプリ設定はクライアントに公開される識別情報です。APIキーだけでデータを守る設計にせず、AuthとSecurity Rulesをアクセス制御の根拠にします。管理者用秘密鍵・サービスアカウントはフロントエンドで使用しません。
 
@@ -125,7 +125,7 @@ SDKの診断警告に文書パス＝コードが含まれるため、アプリ�
 
 src/appのハッシュナビゲーションは#/home、#/chores、#/shopping、#/declutter、#/finances、#/settingsを使用。不明な値はホームへ正規化します。初回の保存済みセッションでは直接アクセス先を維持し、認証UID変更と新規世帯参加時はホームへ戻します。履歴移動を購読し、切り替えで見出しフォーカスと先頭スクロールを行います。依存パッケージ、API、Rules、保存スキーマは変更しません。
 
-項目6時点のホームは実際の世帯と入口だけを表示しました。現在は項目7以降で今日のToDo・今日/持ち越しの家事・未購入・今日までが期限の未処分も表示します。未実装の家計は準備中です。設定の既存招待フォームは画面を離れるとアンマウントし入力を破棄します。メールは設定か準備画面だけに表示。下部メニューはsafe areaと本文の余白を確保し、PWA更新通知はその上へ表示します。[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)を参照してください。
+項目6時点のホームは実際の世帯と入口だけを表示しました。現在は項目7以降で今日のToDo・今日/持ち越しの家事・未購入・今日までが期限の未処分も表示します。家計はPhase 2項目1の収支記録と項目2の予算を表示します。設定の既存招待フォームは画面を離れるとアンマウントし入力を破棄します。メールは設定か準備画面だけに表示。下部メニューはsafe areaと本文の余白を確保し、PWA更新通知はその上へ表示します。[記録0008](./implementation-log/0008-home-navigation.md)と[確認手順](./home-verification.md)を参照してください。
 
 ## ToDo（Phase 1・項目7）
 
@@ -189,4 +189,12 @@ previewとliveは同じFirebase Auth/Firestoreへ接続するが、originが違�
 
 `src/features/finance/`に検証・Firestoreサービス・購読・フォーム・月別表示をまとめる。標準カテゴリは世帯ごとにtransactionで冪等初期化する。カテゴリ文書は`financeCategories/{categoryId}`でtype/name/archived/standard/versionと監査項目を持つ。収入・支出は`incomes/{id}`と`expenses/{id}`に分け、type、title、amount（1〜999,999,999円の整数）、date（日本日付）、categoryId、memo（最大500文字）、version、監査情報を保存する。
 
-月別一覧は日付降順・作成日時降順のクエリを種類ごとに購読し、最大10,000件までを対象に収入・支出合計を算出する。上限に達した場合は合計が取得範囲内である旨を表示する。更新/削除はトランザクションで版を照合し、アーカイブカテゴリは既存明細の同カテゴリ維持に限り更新で利用できる。カテゴリは削除せずアーカイブし、過去の分類を保つ。確認済み同世帯メンバーのみが上限付きでアクセスできる。予算、支払者、負担割合、精算、買い物連携、ホームの金額表示は未実装。[記録0018](./implementation-log/0018-finance-records.md)・[確認手順](./finance-verification.md)を参照。
+月別一覧は日付降順・作成日時降順のクエリを種類ごとに購読し、最大10,000件までを対象に収入・支出合計を算出する。上限に達した場合は合計が取得範囲内である旨を表示する。更新/削除はトランザクションで版を照合し、アーカイブカテゴリは既存明細の同カテゴリ維持に限り更新で利用できる。カテゴリは削除せずアーカイブし、過去の分類を保つ。確認済み同世帯メンバーのみが上限付きでアクセスできる。予算・ホーム金額表示は下記項目2で追加。支払者、負担割合、精算、買い物連携は未実装。[記録0018](./implementation-log/0018-finance-records.md)・[確認手順](./finance-verification.md)を参照。
+
+## 予算とホームの家計（Phase 2・項目2）
+
+家計機能内のbudgetModel/budgetService/useBudgets/BudgetPanelとHomeFinanceで実装する。世帯配下budgetsの文書IDは`YYYY-MM__total`または`YYYY-MM__category__カテゴリID`。保存フィールドはmonth、scope（total/category）、categoryId（全体ならnull）、amount（整数0〜999999999）、version、createdAt/createdBy/updatedAt/updatedBy。月と対象は不変。予算は月ごとで、繰越・収入控除・カテゴリ合計の強制一致は行わない。
+
+更新/解除はtransactionでversionとcreatedAtを照合する。前月コピーは対象ごとのtransactionで対象の未作成・コピー元の現行値・カテゴリの有効性を確認し、失敗件数を報告する。全対象の一括原子更新は行わず、部分成功時も再実行で既存値を上書きしない。アーカイブ後は既存予算を読めるが新規設定/編集/コピーは不可、解除は可能。
+
+対象月の予算は最大101文書＋1件で上限を検出し、不完全な場合は保存操作・正確な残額表示を止める。家計実績は最大10,000件/種類。必要な全購読が準備完了してから確定表示し、失敗した購読を別の購読の成功で上書きしない。上限に達した支出は取得範囲と明示して残額を表示しない。ホームは日本時間の当月支出と月全体予算1文書だけ購読し、月替わり/前面復帰/認証・世帯・画面変更で対象更新と解除を行う。永続キャッシュは追加しない。月条件は単一フィールドの既定索引で取得するため、追加の複合インデックスは不要。[記録0019](./implementation-log/0019-budgets.md)を参照。

@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import { resolve } from 'node:path'
 import { chromium, expect } from '@playwright/test'
 
+const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' })
 const project = 'demo-futari-kurashi',
   url = 'http://127.0.0.1:5181/',
   password = 'Household-Test-Password-123'
@@ -135,7 +136,7 @@ try {
       type = 'expense',
       amount,
       category = 'expense_food',
-      date = '2026-10-21',
+      date = today,
       memo = '',
     },
   ) {
@@ -171,20 +172,130 @@ try {
   await expect(item(b, '共有した食費')).toContainText('1,500円')
   await expect(item(b, '共有した食費')).toContainText('更新後')
 
+  // Budget flows use the same test household and independent browser contexts.
+  const budgetRegion = (page, name) =>
+    page.getByRole('region', { name: `${name}の予算`, exact: true })
+  async function setBudget(page, name, amount) {
+    const region = budgetRegion(page, name)
+    await region.getByRole('button', { name: /^予算を(設定|編集)$/ }).click()
+    await region.getByLabel(`${name}の予算額（円）`).fill(String(amount))
+    await region.getByRole('button', { name: '保存する', exact: true }).click()
+    await expect(region.getByRole('status')).toHaveText('予算を保存しました。')
+    await expect(
+      region.getByText(`予算：${Number(amount).toLocaleString('ja-JP')}円`, {
+        exact: true,
+      }),
+    ).toBeVisible()
+  }
+  await a.getByRole('tab', { name: '予算', exact: true }).click()
+  await b.getByRole('tab', { name: '予算', exact: true }).click()
+  await setBudget(a, '月全体', 1000)
+  await expect(budgetRegion(b, '月全体')).toContainText('500円超過')
+  await setBudget(b, '食費', 2000)
+  await expect(budgetRegion(a, '食費')).toContainText('残り500円')
+  await setBudget(a, '月全体', 0)
+  await expect(budgetRegion(b, '月全体')).toContainText('1,500円超過')
+  await a.getByRole('button', { name: '前の月' }).click()
+  await setBudget(a, '月全体', 5000)
+  await setBudget(a, '食費', 2500)
+  await a.getByRole('button', { name: '次の月' }).click()
+  const food = budgetRegion(a, '食費')
+  await food.getByRole('button', { name: '設定を解除', exact: true }).click()
+  await food.getByRole('button', { name: 'キャンセル', exact: true }).click()
+  await expect(food).toContainText('予算：2,000円')
+  await food.getByRole('button', { name: '設定を解除', exact: true }).click()
+  await food.getByRole('button', { name: '解除する', exact: true }).click()
+  await expect(food).toContainText('予算：未設定')
+  await Promise.all(
+    [a, b].map(async (page) =>
+      page.getByRole('button', { name: '前月からコピー', exact: true }).click(),
+    ),
+  )
+  await expect(food).toContainText('予算：2,500円')
+  await expect(budgetRegion(b, '食費')).toContainText('予算：2,500円')
+  await expect(budgetRegion(a, '月全体')).toContainText('予算：0円')
+  await a.getByRole('button', { name: '前月からコピー', exact: true }).click()
+  await expect(
+    a.getByText(/コピー結果：成功0件・スキップ2件・失敗0件/),
+  ).toBeVisible()
+
+  // Keep an old edit open while the other browser saves.
+  await budgetRegion(b, '月全体')
+    .getByRole('button', { name: '予算を編集' })
+    .click()
+  await budgetRegion(b, '月全体')
+    .getByLabel('月全体の予算額（円）')
+    .fill('2345')
+  await setBudget(a, '月全体', 1000)
+  await budgetRegion(b, '月全体')
+    .getByRole('button', { name: '保存する' })
+    .click()
+  await expect(budgetRegion(b, '月全体')).toContainText('別の端末で変更')
+  await expect(
+    budgetRegion(b, '月全体').getByLabel('月全体の予算額（円）'),
+  ).toHaveValue('2345')
+  await budgetRegion(b, '月全体')
+    .getByRole('button', { name: 'キャンセル' })
+    .click()
+  await nav(a, 'ホーム')
+  await expect(a.getByRole('region', { name: '今月の家計' })).toContainText(
+    '500円超過',
+  )
+  await b.getByRole('tab', { name: '月別明細' }).click()
+  await add(b, { title: '予算の追加支出', amount: 500 })
+  await expect(a.getByRole('region', { name: '今月の家計' })).toContainText(
+    '1,000円超過',
+  )
+  await item(b, '予算の追加支出').getByRole('button', { name: '編集' }).click()
+  await b.getByLabel('金額（円）').fill('700')
+  await b.getByRole('button', { name: '保存する', exact: true }).click()
+  await expect(a.getByRole('region', { name: '今月の家計' })).toContainText(
+    '1,200円超過',
+  )
+  await item(b, '予算の追加支出')
+    .getByRole('button', { name: '削除', exact: true })
+    .click()
+  await b
+    .getByRole('group', { name: '削除の確認' })
+    .getByRole('button', { name: '削除する', exact: true })
+    .click()
+  await expect(a.getByRole('region', { name: '今月の家計' })).toContainText(
+    '500円超過',
+  )
+  await nav(a, '家計')
+  await a.getByRole('tab', { name: '予算', exact: true }).click()
+  await a.reload()
+  await expect(budgetRegion(a, '月全体')).toHaveCount(0) // tab starts at entries after a real reload
+  await a.getByRole('tab', { name: '予算', exact: true }).click()
+  await expect(budgetRegion(a, '月全体')).toContainText('予算：1,000円')
+  await a.getByRole('tab', { name: '月別明細' }).click()
   await a.getByRole('tab', { name: 'カテゴリ管理' }).click()
   await a.getByLabel('カテゴリ名', { exact: true }).fill('趣味')
   await a.getByRole('button', { name: '追加する', exact: true }).click()
   await expect(a.getByLabel('趣味のカテゴリ名')).toBeVisible()
   await b.getByRole('tab', { name: 'カテゴリ管理' }).click()
   await expect(b.getByLabel('趣味のカテゴリ名')).toBeVisible()
+  await b.getByRole('tab', { name: '予算', exact: true }).click()
+  await setBudget(b, '趣味', 3000)
+  await b.getByRole('tab', { name: 'カテゴリ管理' }).click()
   const customCategory = a.getByLabel('趣味のカテゴリ名').locator('xpath=..')
   await a.getByLabel('趣味のカテゴリ名').fill('趣味・娯楽')
   await customCategory.getByRole('button', { name: '名称変更' }).click()
   await expect(b.getByLabel('趣味・娯楽のカテゴリ名')).toBeVisible()
+  await b.getByRole('tab', { name: '予算', exact: true }).click()
+  await expect(budgetRegion(b, '趣味・娯楽')).toContainText('予算：3,000円')
+  await b.getByRole('tab', { name: 'カテゴリ管理' }).click()
 
   const foodCategory = a.getByLabel('食費のカテゴリ名').locator('xpath=..')
   await foodCategory.getByRole('button', { name: 'アーカイブ' }).click()
   await expect(b.getByText('食費（アーカイブ）')).toBeVisible()
+  await b.getByRole('tab', { name: '予算', exact: true }).click()
+  await expect(budgetRegion(b, '食費')).toContainText('アーカイブ')
+  await expect(budgetRegion(b, '食費')).toContainText('予算：2,500円')
+  await expect(
+    budgetRegion(b, '食費').getByRole('button', { name: '予算を編集' }),
+  ).toHaveCount(0)
+  await b.getByRole('tab', { name: 'カテゴリ管理' }).click()
   await b.getByRole('tab', { name: '月別明細' }).click()
   await expect(item(b, '共有した食費')).toContainText('食費')
   await b.getByRole('tab', { name: 'カテゴリ管理' }).click()
@@ -218,9 +329,30 @@ try {
   await expect(item(b, '共有した給与')).toBeVisible()
   await a.getByRole('button', { name: '前の月' }).click()
   await expect(a.getByText('この月の明細はありません。')).toBeVisible()
+  await a.getByRole('tab', { name: '予算', exact: true }).click()
+  for (const width of [320, 390, 1280]) {
+    await a.setViewportSize({ width, height: 844 })
+    assert.ok(
+      await a.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      `budget layout overflows at ${width}`,
+    )
+  }
+  await nav(a, '設定')
+  await a.getByRole('button', { name: 'ログアウト', exact: true }).click()
+  await expect(a.getByRole('region', { name: '今月の家計' })).toHaveCount(0)
+  await a
+    .getByLabel('メールアドレス', { exact: true })
+    .fill(`finance-owner-${stamp}@example.test`)
+  await a.getByLabel('パスワード', { exact: true }).fill(password)
+  await a.getByRole('button', { name: 'ログインする', exact: true }).click()
+  await expect(a.getByRole('region', { name: '今月の家計' })).toContainText(
+    '月予算：1,000円',
+  )
   assert.deepEqual(errors, [])
   console.log(
-    'Finance browser integration passed: shared records, totals, edit/delete, category sync, month navigation and reload',
+    'Finance browser integration passed: shared records, immediate totals, budgets/0/unset, partial-safe concurrent copying, conflicts, home live balances, archives, month navigation and reload',
   )
   await first.close()
   await second.close()

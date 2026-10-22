@@ -88,15 +88,17 @@ async function no(operation) {
   denies++
 }
 async function unchanged(path, operation) {
-  const before = await env.withSecurityRulesDisabled(async (c) =>
-    (await getDoc(doc(c.firestore(), path))).data(),
-  )
+  let before, after
+  await env.withSecurityRulesDisabled(async (c) => {
+    before = (await getDoc(doc(c.firestore(), path))).data()
+  })
   await no(operation())
-  const after = await env.withSecurityRulesDisabled(async (c) =>
-    (await getDoc(doc(c.firestore(), path))).data(),
-  )
+  await env.withSecurityRulesDisabled(async (c) => {
+    after = (await getDoc(doc(c.firestore(), path))).data()
+  })
   assert.deepEqual(after, before)
 }
+
 try {
   await env.withSecurityRulesDisabled(async (c) => {
     const db = c.firestore()
