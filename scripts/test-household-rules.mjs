@@ -129,7 +129,7 @@ const principals = {
   },
 }
 const supportedCollections = ['users', 'households', 'householdInvites']
-const unsupportedCollections = ['cleaningSchedules', 'houseRules', 'unknown']
+const unsupportedCollections = ['cleaningSchedules', 'unknown']
 const unsupportedPaths = unsupportedCollections
   .map((name) => `households/A/${name}/sample`)
   .concat('unknown/sample')

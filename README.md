@@ -139,3 +139,11 @@ budget-checkを[検証URL](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web
 2人世帯の支出で支払者・負担割合・精算対象を設定できます。初期値は本人払い・折半、端数は支払者負担です。旧支出は未設定・対象外として保持します。家計の「精算」で月別の元の精算額と残額、全額/部分払い、確認付き取消、全期間の未精算月と相殺後差額を確認できます。精算金は実際の送金や収支への二重登録を行いません。支出を後から修正した場合も支払済み記録は残り、差額を再計算します。
 
 ローカル検証は`node scripts/run-emulators.mjs settlement`、全検証は`npm run check`・`npm run test:integration`・`npm run test:pwa`。詳細は[確認手順](./docs/settlement-verification.md)と[実装記録0020](./docs/implementation-log/0020-settlements.md)を参照してください。2026-10-23にiPhone＋Macの案内①〜⑥へ本人が「全て確認した」と回答し、項目3完了。次の家のルール管理へ自動では進みません。
+
+## 家のルール・合意・変更履歴（Phase 2・項目4）
+
+設定→家のルールでタイトル・内容・カテゴリ・任意の見直し日を管理し、本人だけが合意/取消を操作します。保存や再開では2人とも未合意に戻り、廃止後も内容・合意状況の履歴を保持します。カテゴリは初期5件から開始し、追加・アーカイブ・再利用が可能です。カテゴリのアーカイブだけで既存ルールの合意は変わりません。
+
+`node scripts/run-emulators.mjs house-rules`で新機能のRulesと2ブラウザーを検証します。全検証は`npm run check`・`npm run test:integration`・`npm run test:pwa`。詳細は[確認手順](./docs/house-rules-verification.md)・[実装記録0021](./docs/implementation-log/0021-house-rules.md)を参照してください。2026-10-23に①〜⑥を本人確認済みで項目4完了。買い物と支出登録の連携へ自動では進みません。
+
+家のルール検証版house-rules-checkを[既存プレビュー](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み（期限2026-10-30 15:12 JST）。180単体・全統合/PWA・公開smoke成功。2026-10-23にiPhone＋Macでの本人確認済みです。

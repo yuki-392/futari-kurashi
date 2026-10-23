@@ -167,3 +167,11 @@ Emulator無効・識別子declutter-checkで既存pwa-checkへ7日間検証公�
 精算対象expensesとsettlementMonths/settlementPaymentsのRulesを追加する。公開前に現行Rules・15インデックス・fieldOverrides=[]・請求先未接続・live版を読み戻し、Git対象外`.tools.local/rules-backups/0020-before`へ保存する。対象支出はsharing.payerIdの不等号条件、精算金はmonth条件、月状態は上限付き一覧を使う。既定の単一フィールド索引で足りるため複合索引は追加しない。
 
 検証成功後、`--project futari-kurashi-5fcab9`を明示してfirestore:rulesだけを反映し、公開Rulesとソースの完全一致・既存15インデックスのREADYを確認する。Emulator=false・settlement-checkで既存pwa-checkへ7日間公開し、`--no-authorized-domains`を明示する。previewは本番と同じAuth/Firestoreであり、期限後も精算金とRulesは残る。既存データの削除・移行、本番live更新は行わない。[記録0020](./implementation-log/0020-settlements.md)と[確認手順](./settlement-verification.md)を参照。
+
+## Phase 2・項目4: 家のルール
+
+ruleCategories/houseRules/historyのRulesと、houseRulesのarchived+updatedAt降順、archived+categoryId+updatedAt降順の2複合索引を追加する。変更前のRules/15索引/課金/Hosting参照をGit対象外.tools.local/rules-backups/0021-beforeへ保存し、必要な追加だけを反映する。公開ソース一致、全17索引の定義とREADY、fieldOverrides=[]、請求先未接続、本番live不変を読み戻す。
+
+Emulator=false・house-rules-checkでビルドし、専用プロジェクトfutari-kurashi-5fcab9と--no-authorized-domainsを明示して既存pwa-checkへ7日間公開する。previewも既存のAuth/Firestoreを使用し、期限後もデータ・Rules・索引は保持される。本番Hostingや既存データを変更しない。[記録0021](./implementation-log/0021-house-rules.md)・[確認手順](./house-rules-verification.md)を参照。
+
+2026-10-23 15:12 JSTにhouse-rules-checkをpwa-checkへ公開（60a03104f133356e、期限2026-10-30 15:12:11 JST）。公開Ruleset fa25a871-d636-4e14-958d-d3d4075700edはソース完全一致、全17索引READY/定義一致、fieldOverrides=[]、請求先未接続、live da586cc22659f2a3維持を読み戻した。2026-10-23に案内①〜⑥を本人確認済みで項目4完了。今回の記録更新で追加デプロイは行っていない。

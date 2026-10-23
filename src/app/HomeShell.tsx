@@ -3,8 +3,7 @@ import { ShoppingPanel } from '../features/shopping/ShoppingPanel'
 import { useEffect, useRef } from 'react'
 import { ChoresPanel } from '../features/recurring-tasks/ChoresPanel'
 import { HomePanel } from '../features/home/HomePanel'
-import { HouseholdPanel } from '../features/household/HouseholdPanel'
-import { AccountControls } from '../features/auth/AccountControls'
+import { SettingsPanel } from './SettingsPanel'
 import { FinancePanel } from '../features/finance/FinancePanel'
 import { pages, usePage } from './navigation'
 
@@ -33,10 +32,7 @@ export function HomeShell() {
       ) : page.id === 'declutter' ? (
         <DeclutterPanel />
       ) : page.id === 'settings' ? (
-        <>
-          <HouseholdPanel />
-          <AccountControls />
-        </>
+        <SettingsPanel />
       ) : page.id === 'finances' ? (
         <FinancePanel />
       ) : (

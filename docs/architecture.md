@@ -23,7 +23,7 @@ React / TypeScriptのSPAをViteでビルドし、Tailwind CSSのViteプラグイ
 
 ## 世帯データの構成（所属・招待・ToDoを実装済み）
 
-世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9、declutterItemsは項目10で実装し、financeCategories/incomes/expensesはPhase 2項目1で実装済み。それ以外は設計候補・未実装です。
+世帯IDをデータ分離の単位にし、各データは`households/{householdId}/...`配下にまとめる方針です。所属・招待は下記の専用スキーマで実装済みです。tasksは項目7、recurringTasks/recurringCompletionsは項目8Aで実装し、項目8Bの掃除も同じ定義/履歴を使います。shoppingItemsは項目9、declutterItemsは項目10で実装し、financeCategories/incomes/expensesはPhase 2項目1、budgetsは項目2、settlementMonths/settlementPaymentsは項目3で実装済み。項目4でruleCategories/houseRules/historyを追加し、それ以外は設計候補・未実装です。
 
 ```text
 users/{uid}                         本人の所属（プロフィールは未実装）
@@ -38,7 +38,9 @@ households/{householdId}             世帯とメンバー（上限2人）
   expenses/{expenseId}               支出記録
   incomes/{incomeId}                 収入記録
   budgets/{budgetId}                 月間・カテゴリ予算
-  houseRules/{ruleId}                Phase 2: 家のルール
+  ruleCategories/{categoryId}        家のルールの分類・アーカイブ
+  houseRules/{ruleId}                家のルールと最新版の合意
+    history/{version}               操作後の不変スナップショット
 ```
 
 - 担当者は表示名でなくUIDで保存し、「2人」を表せる形にする。
@@ -210,3 +212,13 @@ previewとliveは同じFirebase Auth/Firestoreへ接続するが、originが違�
 対象支出の作成/更新/削除は月状態の版を同じtransactionで進める。日付の月を移す場合は両月を読み、全読み取り後に書く。精算金作成/取消は表示時の月の版と照合し、netPaidと記録を同時更新する。RulesはgetAfterで文書対応と差分を検証し、関連書き込みの分解や新形式のsharing消失を拒否する。
 
 精算画面だけで全期間の対象支出（sharing.payerIdの不等号条件）、月状態、選択月の精算金を各上限10,000件で購読する。onSnapshotsInSyncと全購読のサーバー応答/pending情報の両方を使い、途中状態から残額を確定しない。取得上限・エラー・未準備では操作を止め、解除時に表示と入力を破棄する。既定の単一フィールド索引を使い複合索引は追加しない。整数円の精算金は1〜9999999999999、月累計の絶対値は999999999999999以内。全期間の符号付き合計はBigIntで計算し、表示可能な安全な整数範囲を超えたら精算操作を止める。[記録0020](./implementation-log/0020-settlements.md)・[確認手順](./settlement-verification.md)を参照。
+
+## 家のルール・合意・変更履歴（Phase 2・項目4）
+
+src/features/house-rulesに機能をまとめ、設定内の世帯・アカウント/家のルール切り替えから開く。Providerと6画面のURL構成を共有し、各表示が不要になれば購読と入力を破棄する。households/{hid}/ruleCategoriesに初期5カテゴリ（決定的ID）と追加カテゴリを保存。初期化は存在確認後の作成だけで、アーカイブを復活させない。名称は作成時に固定、削除はアーカイブ、再利用も可能。
+
+households/{hid}/houseRules/{id}はtitle/body/categoryId/categoryName/reviewDate/archived/contentVersion/version/agreedUids/lastActionと作成/更新監査を保存。文字はコードポイントでタイトル1〜100、本文1〜2000。見直し日は任意で日本時間、既存useTokyoDayを共用する。編集保存と再開は内容の版を進め、全員の合意を解除する。合意/取消・廃止は内容の版を維持し、操作全体の版だけを進める。最新内容を未合意として表示する方式で、提案版/適用版を別管理しない。
+
+history/{version}へ操作後スナップショットを同じtransactionで作成し、Rulesは両方向のgetAfter照合で欠落・単独生成・改ざんを拒否する。編集/廃止/再開は表示時のversion、合意/取消は表示時のcontentVersionと現在状態を照合し、相手の合意を保持する。同時合意/初期化でSDKがpermission-deniedを返す場合だけ、最新を読み直す処理を最大3回実行する（abortedも対象）。権限条件は緩めず、古い内容への合意は再試行でも拒否する。
+
+現行/廃止とカテゴリはFirestoreクエリ条件、一覧はupdatedAt降順、カテゴリはcreatedAt昇順、履歴はsnapshot.version降順。各100件ずつ・最大10,000件+追加確認1件、取得上限はUIで明示。ルール用の複合索引2件を追加する。カテゴリ/履歴の既定の単一フィールド索引はそのまま利用し、永続キャッシュ・バックエンド・通知は追加しない。[実装記録0021](./implementation-log/0021-house-rules.md)・[確認手順](./house-rules-verification.md)を参照。

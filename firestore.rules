@@ -588,6 +588,90 @@ service cloud.firestore {
         && paymentMonthGuard(hid,id,request.resource.data,'cancel');
       allow delete: if false;
     }
+    function rulePath(hid,id) { return /databases/$(database)/documents/households/$(hid)/houseRules/$(id); }
+    function ruleHistoryPath(hid,id,version) { return /databases/$(database)/documents/households/$(hid)/houseRules/$(id)/history/$(string(version)); }
+    function ruleCategoryPath(hid,id) { return /databases/$(database)/documents/households/$(hid)/ruleCategories/$(id); }
+    function ruleStandardId(id) { return id in ['chores','money','habits','space','other']; }
+    function ruleStandardName(id,name) {
+      return (id == 'chores' && name == '家事') || (id == 'money' && name == 'お金')
+        || (id == 'habits' && name == '生活習慣') || (id == 'space' && name == '共有スペース') || (id == 'other' && name == 'その他');
+    }
+    function validRuleCategory(id,data) {
+      return data.keys().hasAll(['name','standard','archived','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['name','standard','archived','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.name is string && data.name == data.name.trim() && data.name.matches('(?s).{1,40}')
+        && data.standard is bool && data.archived is bool
+        && (data.standard ? ruleStandardId(id) && ruleStandardName(id,data.name) : !ruleStandardId(id))
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.createdAt is timestamp && data.createdBy is string && data.updatedAt == request.time && data.updatedBy == request.auth.uid;
+    }
+    function validHouseRule(hid,data,oldCategory) {
+      let category = get(ruleCategoryPath(hid,data.categoryId)).data;
+      let members = get(homePath(hid)).data.memberIds;
+      return data.keys().hasAll(['title','body','categoryId','categoryName','reviewDate','archived','contentVersion','version','agreedUids','lastAction','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['title','body','categoryId','categoryName','reviewDate','archived','contentVersion','version','agreedUids','lastAction','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.title is string && data.title == data.title.trim() && data.title.matches('(?s).{1,100}')
+        && data.body is string && data.body == data.body.trim() && data.body.matches('(?s).{1,1000}.{0,1000}')
+        && data.categoryId is string && data.categoryId.size() > 0 && data.categoryId.size() <= 128
+        && data.categoryName == category.name && (!category.archived || data.categoryId == oldCategory)
+        && (data.reviewDate == null || recValidDate(data.reviewDate)) && data.archived is bool
+        && data.contentVersion is int && data.contentVersion >= 1 && data.contentVersion <= data.version
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.agreedUids is list && data.agreedUids.size() <= 2 && data.agreedUids.toSet().size() == data.agreedUids.size() && data.agreedUids.hasOnly(members)
+        && data.lastAction in ['create','edit','agree','withdraw','retire','restore']
+        && data.createdAt is timestamp && data.createdBy is string && data.updatedAt == request.time && data.updatedBy == request.auth.uid;
+    }
+    function houseRuleHistoryGuard(hid,id,data) {
+      let path = ruleHistoryPath(hid,id,data.version);
+      return !exists(path) && getAfter(path).data.keys().hasOnly(['snapshot']) && getAfter(path).data.snapshot == data;
+    }
+    function houseRuleTransition(before,after) {
+      let kind = after.lastAction;
+      let changed = after.diff(before).affectedKeys();
+      return (kind in ['edit','restore']
+          && (kind == 'edit' ? !before.archived && !after.archived : before.archived && !after.archived)
+          && after.contentVersion == before.contentVersion+1 && after.agreedUids == [])
+        || (kind == 'retire' && !before.archived && after.archived && changed.hasOnly(['archived','version','lastAction','updatedAt','updatedBy']))
+        || (kind in ['agree','withdraw'] && !before.archived && !after.archived
+          && changed.hasOnly(['agreedUids','version','lastAction','updatedAt','updatedBy'])
+          && (kind == 'agree'
+            ? !(request.auth.uid in before.agreedUids) && after.agreedUids.toSet() == before.agreedUids.toSet().union([request.auth.uid].toSet())
+            : request.auth.uid in before.agreedUids && after.agreedUids.toSet() == before.agreedUids.toSet().difference([request.auth.uid].toSet())));
+    }
+    match /households/{hid}/ruleCategories/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10001;
+      allow create: if taskMember(hid) && validRuleCategory(id,request.resource.data) && request.resource.data.version == 1 && !request.resource.data.archived
+        && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if taskMember(hid) && validRuleCategory(id,request.resource.data)
+        && request.resource.data.version == resource.data.version+1
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived','version','updatedAt','updatedBy']);
+      allow delete: if false;
+    }
+    match /households/{hid}/houseRules/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10001;
+      allow create: if taskMember(hid) && validHouseRule(hid,request.resource.data,null)
+        && request.resource.data.version == 1 && request.resource.data.contentVersion == 1
+        && request.resource.data.agreedUids == [] && !request.resource.data.archived && request.resource.data.lastAction == 'create'
+        && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid
+        && houseRuleHistoryGuard(hid,id,request.resource.data);
+      allow update: if taskMember(hid) && validHouseRule(hid,request.resource.data,resource.data.categoryId)
+        && request.resource.data.version == resource.data.version+1
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy
+        && houseRuleTransition(resource.data,request.resource.data) && houseRuleHistoryGuard(hid,id,request.resource.data);
+      allow delete: if false;
+      match /history/{version} {
+        allow get: if taskMember(hid);
+        allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10001;
+        allow create: if taskMember(hid) && request.resource.data.keys().hasAll(['snapshot']) && request.resource.data.keys().hasOnly(['snapshot'])
+          && request.resource.data.snapshot == getAfter(rulePath(hid,id)).data
+          && version == string(request.resource.data.snapshot.version)
+          && request.resource.data.snapshot.version == (exists(rulePath(hid,id)) ? get(rulePath(hid,id)).data.version+1 : 1)
+          && request.resource.data.snapshot.updatedAt == request.time && request.resource.data.snapshot.updatedBy == request.auth.uid;
+        allow update,delete: if false;
+      }
+    }
     // 未実装の業務データは引き続き全拒否。
     match /{document=**} { allow read, write: if false; }
   }
