@@ -407,7 +407,8 @@ service cloud.firestore {
     function validFinanceEntry(hid,data,allowArchived,oldCategoryId) {
       let category = get(financeCategoryPath(hid,data.categoryId)).data;
       return data.keys().hasAll(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy'])
-        && data.keys().hasOnly(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy','sharing'])
+        && validSharing(hid,data)
         && data.type in ['income','expense']
         && data.title is string && data.title == data.title.trim() && data.title.matches('(?s).{1,100}')
         && data.amount is int && data.amount >= 1 && data.amount <= 999999999
@@ -447,11 +448,14 @@ service cloud.firestore {
       allow get: if taskMember(hid);
       allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10000;
       allow create: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,false,null) && request.resource.data.type == 'expense'
+        && expenseGuards(hid,id,{},request.resource.data)
         && request.resource.data.version == 1 && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
       allow update: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,true,resource.data.categoryId) && request.resource.data.type == 'expense'
+        && (!resource.data.keys().hasAny(['sharing']) || request.resource.data.keys().hasAll(['sharing']))
+        && expenseGuards(hid,id,resource.data,request.resource.data)
         && request.resource.data.version == resource.data.version + 1
         && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
-      allow delete: if taskMember(hid);
+      allow delete: if taskMember(hid) && expenseGuards(hid,id,resource.data,{});
     }
     function validBudgetMonth(month) {
       return month is string && month.matches('^[1-9][0-9]{3}-(0[1-9]|1[0-2])$');
@@ -480,6 +484,109 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.month == resource.data.month && request.resource.data.scope == resource.data.scope && request.resource.data.categoryId == resource.data.categoryId;
       allow delete: if taskMember(hid);
+    }
+    function validSharing(hid,data) {
+      let s = data.get('sharing',null);
+      let members = get(/databases/$(database)/documents/households/$(hid)).data.memberIds;
+      return data.type == 'income' ? !data.keys().hasAny(['sharing'])
+        : s == null || (s is map && s.keys().hasAll(['payerId','shares']) && s.keys().hasOnly(['payerId','shares'])
+          && members.size() == 2 && s.payerId in members && s.shares is map
+          && s.shares.keys().hasAll(members) && s.shares.keys().hasOnly(members)
+          && s.shares[members[0]] is int && s.shares[members[1]] is int
+          && s.shares[members[0]] >= 0 && s.shares[members[0]] <= 100
+          && s.shares[members[1]] >= 0 && s.shares[members[1]] <= 100
+          && s.shares[members[0]] + s.shares[members[1]] == 100);
+    }
+    function settlementMonthPath(hid,month) {
+      return /databases/$(database)/documents/households/$(hid)/settlementMonths/$(month);
+    }
+    function settlementPaymentPath(hid,id) {
+      return /databases/$(database)/documents/households/$(hid)/settlementPayments/$(id);
+    }
+    function settlementExpensePath(hid,id) {
+      return /databases/$(database)/documents/households/$(hid)/expenses/$(id);
+    }
+    function expenseHasMonth(data,month) {
+      return data != null && data.get('sharing',null) != null && data.date[0:7] == month;
+    }
+    function expenseMonthGuard(hid,id,data) {
+      let month = data.date[0:7];
+      let path = settlementMonthPath(hid,month);
+      let after = getAfter(path).data;
+      return after.version == (exists(path) ? get(path).data.version + 1 : 1)
+        && after.lastKind == 'expense' && after.lastId == id;
+    }
+    function expenseGuards(hid,id,before,after) {
+      return (before == null || before.get('sharing',null) == null || expenseMonthGuard(hid,id,before))
+        && (after == null || after.get('sharing',null) == null || expenseMonthGuard(hid,id,after));
+    }
+    function monthExpenseChange(hid,month,data) {
+      let path = settlementExpensePath(hid,data.lastId);
+      let before = exists(path) ? get(path).data : {};
+      let after = existsAfter(path) ? getAfter(path).data : {};
+      return (expenseHasMonth(before,month) || expenseHasMonth(after,month)) && before != after
+        && data.netPaid == (exists(settlementMonthPath(hid,month)) ? get(settlementMonthPath(hid,month)).data.netPaid : 0);
+    }
+    function validSettlementPayment(hid,data) {
+      let members = get(/databases/$(database)/documents/households/$(hid)).data.memberIds;
+      return data.keys().hasAll(['month','fromUid','toUid','amount','date','canceledAt','canceledBy','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['month','fromUid','toUid','amount','date','canceledAt','canceledBy','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && validBudgetMonth(data.month) && recValidDate(data.date)
+        && members.size() == 2 && data.fromUid in members && data.toUid in members && data.fromUid != data.toUid
+        && data.amount is int && data.amount >= 1 && data.amount <= 9999999999999
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedAt == request.time && data.updatedBy == request.auth.uid;
+    }
+    function paymentMonthGuard(hid,id,data,kind) {
+      let path = settlementMonthPath(hid,data.month);
+      let after = getAfter(path).data;
+      return after.version == (exists(path) ? get(path).data.version+1 : 1) && after.lastKind == kind && after.lastId == id;
+    }
+    function monthPaymentChange(hid,month,data) {
+      let path = settlementPaymentPath(hid,data.lastId);
+      let after = getAfter(path).data;
+      let delta = after.toUid == get(/databases/$(database)/documents/households/$(hid)).data.ownerId ? after.amount : -after.amount;
+      let previous = exists(settlementMonthPath(hid,month)) ? get(settlementMonthPath(hid,month)).data.netPaid : 0;
+      return after.month == month && (data.lastKind == 'payment'
+        ? !exists(path) && after.canceledAt == null && data.netPaid == previous + delta
+        : exists(path) && get(path).data.canceledAt == null && after.canceledAt == request.time && data.netPaid == previous - delta);
+    }
+    function validSettlementMonth(hid,id,data) {
+      return data.keys().hasAll(['month','netPaid','version','lastKind','lastId','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['month','netPaid','version','lastKind','lastId','createdAt','createdBy','updatedAt','updatedBy'])
+        && validBudgetMonth(id) && data.month == id
+        && data.netPaid is int && data.netPaid >= -999999999999999 && data.netPaid <= 999999999999999
+        && data.version is int && data.version >= 1 && data.version <= 9007199254740991
+        && data.lastId is string && data.lastId.size() > 0 && data.lastId.size() <= 128
+        && data.createdAt is timestamp && data.createdBy is string
+        && data.updatedAt == request.time && data.updatedBy == request.auth.uid
+        && (data.lastKind == 'expense' ? monthExpenseChange(hid,id,data)
+          : data.lastKind in ['payment','cancel'] && monthPaymentChange(hid,id,data));
+    }
+    match /households/{hid}/settlementMonths/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10000;
+      allow create: if taskMember(hid) && validSettlementMonth(hid,id,request.resource.data)
+        && request.resource.data.version == 1 && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
+      allow update: if taskMember(hid) && validSettlementMonth(hid,id,request.resource.data)
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if false;
+    }
+    match /households/{hid}/settlementPayments/{id} {
+      allow get: if taskMember(hid);
+      allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10000;
+      allow create: if taskMember(hid) && validSettlementPayment(hid,request.resource.data)
+        && request.resource.data.version == 1 && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.canceledAt == null && request.resource.data.canceledBy == null
+        && paymentMonthGuard(hid,id,request.resource.data,'payment');
+      allow update: if taskMember(hid) && validSettlementPayment(hid,request.resource.data)
+        && resource.data.canceledAt == null && request.resource.data.canceledAt == request.time && request.resource.data.canceledBy == request.auth.uid
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['canceledAt','canceledBy','version','updatedAt','updatedBy'])
+        && paymentMonthGuard(hid,id,request.resource.data,'cancel');
+      allow delete: if false;
     }
     // 未実装の業務データは引き続き全拒否。
     match /{document=**} { allow read, write: if false; }

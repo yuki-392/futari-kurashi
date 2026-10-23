@@ -161,3 +161,9 @@ Emulator無効・識別子declutter-checkで既存pwa-checkへ7日間検証公�
 2026-10-22にbudget-checkをpwa-checkへ公開済み。Hosting version 0e4cdcf8cf4a85f9、期限2026-10-29 09:20 JST。公開Ruleset ded7152e-3fb3-49c5-be8f-0710b6d1e1f0はローカルと完全一致。15インデックスの定義一致・READY、fieldOverrides=[]、請求先未接続を読み戻し確認。本番liveの版da586cc22659f2a3を維持した。
 
 2026-10-22にiPhone＋Macの予算確認案内①〜⑥を本人が「すべてok」と回答し、項目2完了。公開後の設定変更・追加デプロイ・データ削除は行っていない。
+
+## Phase 2・項目3: 支払者・負担割合・精算
+
+精算対象expensesとsettlementMonths/settlementPaymentsのRulesを追加する。公開前に現行Rules・15インデックス・fieldOverrides=[]・請求先未接続・live版を読み戻し、Git対象外`.tools.local/rules-backups/0020-before`へ保存する。対象支出はsharing.payerIdの不等号条件、精算金はmonth条件、月状態は上限付き一覧を使う。既定の単一フィールド索引で足りるため複合索引は追加しない。
+
+検証成功後、`--project futari-kurashi-5fcab9`を明示してfirestore:rulesだけを反映し、公開Rulesとソースの完全一致・既存15インデックスのREADYを確認する。Emulator=false・settlement-checkで既存pwa-checkへ7日間公開し、`--no-authorized-domains`を明示する。previewは本番と同じAuth/Firestoreであり、期限後も精算金とRulesは残る。既存データの削除・移行、本番live更新は行わない。[記録0020](./implementation-log/0020-settlements.md)と[確認手順](./settlement-verification.md)を参照。

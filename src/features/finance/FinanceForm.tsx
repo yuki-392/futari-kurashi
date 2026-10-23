@@ -1,3 +1,5 @@
+import { splitExpense } from './settlementModel'
+import { formatYen } from './model'
 import { useEffect, useRef, useState } from 'react'
 import { financeMessage } from './model'
 import type {
@@ -13,7 +15,11 @@ export function FinanceForm({
   entry,
   onSave,
   onCancel,
+  members = [],
+  uid = '',
 }: {
+  members?: string[]
+  uid?: string
   categories: FinanceCategory[]
   entry?: FinanceEntry
   onSave: (input: FinanceEntryInput) => Promise<void>
@@ -36,6 +42,28 @@ export function FinanceForm({
     ? selectedCategoryId
     : (available[0]?.id ?? '')
   const [memo, setMemo] = useState(entry?.memo ?? '')
+  const partner = members.find((id) => id !== uid) ?? ''
+  const [included, setIncluded] = useState(
+    entry ? Boolean(entry.sharing) : members.length === 2,
+  )
+  const [payerId, setPayerId] = useState(entry?.sharing?.payerId ?? uid)
+  const [percent, setPercent] = useState(
+    String(entry?.sharing?.shares[uid] ?? 50),
+  )
+  const sharing =
+    included && members.length === 2
+      ? {
+          payerId,
+          shares: { [uid]: Number(percent), [partner]: 100 - Number(percent) },
+        }
+      : null
+  const preview =
+    sharing &&
+    Number.isInteger(Number(percent)) &&
+    Number(percent) >= 0 &&
+    Number(percent) <= 100
+      ? splitExpense(Number(amount), sharing)
+      : null
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const lock = useRef(false)
@@ -50,6 +78,18 @@ export function FinanceForm({
       onSubmit={(event) => {
         event.preventDefault()
         if (lock.current) return
+        if (
+          type === 'expense' &&
+          included &&
+          members.length === 2 &&
+          (!percent.trim() ||
+            !Number.isInteger(Number(percent)) ||
+            Number(percent) < 0 ||
+            Number(percent) > 100)
+        ) {
+          setMessage('負担割合は0〜100%の整数で入力してください。')
+          return
+        }
         const parsedAmount = Number(amount)
         if (!Number.isSafeInteger(parsedAmount)) {
           setMessage('金額は1〜999999999円の整数で入力してください。')
@@ -65,6 +105,7 @@ export function FinanceForm({
           date,
           categoryId,
           memo,
+          ...(type === 'expense' ? { sharing } : {}),
         })
           .then(() => {
             if (!entry) {
@@ -151,6 +192,69 @@ export function FinanceForm({
             ))}
           </select>
         </label>
+        {type === 'expense' ? (
+          <section
+            className="space-y-3 rounded-xl bg-sage p-4"
+            aria-label="精算の設定"
+          >
+            {entry?.sharing === undefined && entry ? (
+              <p className="text-sm">
+                精算情報未設定・対象外です。登録者から支払者を推測しません。
+              </p>
+            ) : null}
+            <label className="flex min-h-11 items-center gap-2">
+              <input
+                type="checkbox"
+                checked={included && members.length === 2}
+                disabled={members.length !== 2}
+                onChange={(e) => setIncluded(e.target.checked)}
+              />
+              精算対象にする
+            </label>
+            {members.length !== 2 ? (
+              <p className="text-sm">2人所属後に精算対象を設定できます。</p>
+            ) : null}
+            {included && members.length === 2 ? (
+              <>
+                <label className="block">
+                  支払者
+                  <select
+                    className="task-input"
+                    value={payerId}
+                    onChange={(e) => setPayerId(e.target.value)}
+                  >
+                    {members.map((id) => (
+                      <option key={id} value={id}>
+                        {id === uid ? '自分' : '相手'}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  自分の負担割合（%）
+                  <input
+                    className="task-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={percent}
+                    onChange={(e) => setPercent(e.target.value)}
+                  />
+                </label>
+                <p>相手の負担割合：{100 - Number(percent)}%</p>
+                {preview ? (
+                  <p>
+                    負担額：自分 {formatYen(preview[uid] ?? 0)} ／ 相手{' '}
+                    {formatYen(preview[partner] ?? 0)}
+                  </p>
+                ) : null}
+                <p className="text-sm">1円未満の端数は支払者が負担します。</p>
+              </>
+            ) : null}
+          </section>
+        ) : null}
         <label className="block text-sm">
           メモ（任意）
           <textarea

@@ -1,3 +1,4 @@
+import type { Sharing } from './settlementModel'
 export type FinanceType = 'income' | 'expense'
 
 export const standardCategories: Record<
@@ -43,6 +44,7 @@ export type FinanceEntryInput = {
   date: string
   categoryId: string
   memo: string
+  sharing?: Sharing | null
 }
 
 export type FinanceEntry = FinanceEntryInput & {
@@ -103,6 +105,9 @@ export function cleanFinanceEntry(
     date: value.date,
     categoryId: value.categoryId,
     memo,
+    ...(value.type === 'expense' && value.sharing !== undefined
+      ? { sharing: value.sharing }
+      : {}),
   }
 }
 

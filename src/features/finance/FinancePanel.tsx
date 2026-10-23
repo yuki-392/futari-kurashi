@@ -1,3 +1,4 @@
+import { SettlementPanel } from './SettlementPanel'
 import { BudgetPanel } from './BudgetPanel'
 import { useMemo, useState } from 'react'
 import { useHousehold } from '../household/context'
@@ -15,7 +16,7 @@ import { financeMessage, formatYen, monthTotals } from './model'
 import type { FinanceCategory, FinanceEntry, FinanceType } from './model'
 import { useFinanceCategories, useFinanceEntries } from './useFinance'
 
-type View = 'entries' | 'categories' | 'budgets'
+type View = 'entries' | 'categories' | 'budgets' | 'settlements'
 
 export function FinancePanel() {
   const { uid, household } = useHousehold()
@@ -27,7 +28,7 @@ export function FinancePanel() {
   const categories = useFinanceCategories()
   const entries = useFinanceEntries(
     month,
-    view !== 'categories',
+    view !== 'categories' && view !== 'settlements',
     view === 'budgets' ? 'expense' : undefined,
   )
   const totals = useMemo(() => monthTotals(entries.entries), [entries.entries])
@@ -165,8 +166,24 @@ export function FinancePanel() {
         >
           予算
         </button>
+        <button
+          role="tab"
+          aria-selected={view === 'settlements'}
+          className={
+            view === 'settlements'
+              ? 'task-primary'
+              : 'rounded-xl border border-line px-4 py-3'
+          }
+          onClick={() => {
+            setView('settlements')
+            setEditing(null)
+            setDeleting(null)
+          }}
+        >
+          精算
+        </button>
       </div>
-      {view === 'budgets' ? (
+      {view === 'budgets' || view === 'settlements' ? (
         <>
           <div className="flex items-center justify-between gap-2">
             <button
@@ -187,16 +204,20 @@ export function FinancePanel() {
               翌月
             </button>
           </div>
-          <BudgetPanel
-            key={month}
-            month={month}
-            categories={categories.categories}
-            entries={entries.entries}
-            complete={entries.complete}
-            ready={entries.status === 'ready'}
-            error={entries.status === 'error'}
-            onRetry={entries.retry}
-          />
+          {view === 'settlements' ? (
+            <SettlementPanel key={month} month={month} />
+          ) : (
+            <BudgetPanel
+              key={month}
+              month={month}
+              categories={categories.categories}
+              entries={entries.entries}
+              complete={entries.complete}
+              ready={entries.status === 'ready'}
+              error={entries.status === 'error'}
+              onRetry={entries.retry}
+            />
+          )}
         </>
       ) : view === 'entries' ? (
         <>
@@ -244,6 +265,8 @@ export function FinancePanel() {
               key={`${editing.id}:${editing.version}`}
               entry={editing}
               categories={categories.categories}
+              uid={uid}
+              members={household!.memberIds}
               onCancel={() => setEditing(null)}
               onSave={(input) => saveEntry(editing, input)}
             />
@@ -251,6 +274,8 @@ export function FinancePanel() {
             <FinanceForm
               key="new-entry"
               categories={categories.categories}
+              uid={uid}
+              members={household!.memberIds}
               onSave={(input) => saveEntry(null, input)}
             />
           )}
@@ -278,6 +303,15 @@ export function FinancePanel() {
                           {entry.date} · {categoryLabel(entry)} ·{' '}
                           {entry.type === 'income' ? '収入' : '支出'}
                         </p>
+                        {entry.type === 'expense' ? (
+                          <p className="mt-1 text-sm">
+                            {entry.sharing
+                              ? `精算対象・支払者：${entry.sharing.payerId === uid ? '自分' : '相手'}・自分の負担 ${entry.sharing.shares[uid]}%`
+                              : entry.sharing === null
+                                ? '精算対象外'
+                                : '精算情報未設定・対象外'}
+                          </p>
+                        ) : null}
                         {entry.memo ? (
                           <p className="mt-2 break-words text-sm">
                             {entry.memo}
@@ -336,7 +370,7 @@ export function FinancePanel() {
                   onClick={() => {
                     if (deleteBusy) return
                     setDeleteBusy(true)
-                    void removeFinanceEntry(household!.id, deleting)
+                    void removeFinanceEntry(household!.id, deleting, uid)
                       .then(() => {
                         setDeleting(null)
                         setMessage('明細を削除しました。')

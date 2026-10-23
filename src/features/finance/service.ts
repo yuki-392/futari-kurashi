@@ -1,3 +1,4 @@
+import { prepareExpenseMonths } from './settlementService'
 import {
   collection,
   doc,
@@ -145,6 +146,16 @@ export async function createFinanceEntry(
   const target = doc(collection(db, 'households', householdId, collectionName))
   await runTransaction(db, async (tx) => {
     if ((await tx.get(target)).exists()) throw conflict()
+    const writeMonths = await prepareExpenseMonths(
+      tx,
+      db,
+      householdId,
+      uid,
+      target.id,
+      null,
+      data,
+    )
+    writeMonths()
     tx.set(target, {
       ...data,
       version: 1,
@@ -180,6 +191,18 @@ export async function changeFinanceEntry(
     const snapshot = await tx.get(currentRef)
     if (!snapshot.exists() || snapshot.data().version !== expected.version)
       throw conflict()
+    if (snapshot.data().sharing !== undefined && data.sharing === undefined)
+      throw new Error('アプリを更新して精算情報を確認してください。')
+    const writeMonths = await prepareExpenseMonths(
+      tx,
+      db,
+      householdId,
+      uid,
+      expected.id,
+      snapshot.data() as FinanceEntryInput,
+      data,
+    )
+    writeMonths()
     tx.update(currentRef, {
       ...data,
       version: expected.version + 1,
@@ -192,6 +215,7 @@ export async function changeFinanceEntry(
 export async function removeFinanceEntry(
   householdId: string,
   expected: FinanceEntry,
+  uid?: string,
 ) {
   requireOnline()
   const { db } = await getFirebaseServices()
@@ -201,6 +225,18 @@ export async function removeFinanceEntry(
     const snapshot = await tx.get(ref)
     if (!snapshot.exists() || snapshot.data().version !== expected.version)
       throw conflict()
+    if (snapshot.data().sharing && !uid)
+      throw new Error('アプリを更新してください。')
+    const writeMonths = await prepareExpenseMonths(
+      tx,
+      db,
+      householdId,
+      uid ?? expected.updatedBy,
+      expected.id,
+      snapshot.data() as FinanceEntryInput,
+      null,
+    )
+    writeMonths()
     tx.delete(ref)
   })
 }

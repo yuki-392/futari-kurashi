@@ -122,7 +122,7 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 
 ## 家計の収入・支出記録（Phase 2・項目1）
 
-家計画面で月を切り替え、収入・支出明細の登録・編集・確認付き削除と月別合計を確認できます。標準カテゴリは初回利用時に世帯へ一度だけ登録し、世帯独自カテゴリの追加・名称変更・アーカイブができます。アーカイブ済みカテゴリは新規入力から外れ、過去明細の表示には残ります。金額は1円以上の整数、メモは任意です。予算・精算・支払者/負担割合・買い物連携は後続項目です。
+家計画面で月を切り替え、収入・支出明細の登録・編集・確認付き削除と月別合計を確認できます。標準カテゴリは初回利用時に世帯へ一度だけ登録し、世帯独自カテゴリの追加・名称変更・アーカイブができます。アーカイブ済みカテゴリは新規入力から外れ、過去明細の表示には残ります。金額は1円以上の整数、メモは任意です。予算は項目2、精算・支払者/負担割合は項目3で追加します。買い物連携は後続項目です。
 
 `npm run test:finance`はRulesと2ブラウザーの共有・カテゴリ・月別合計を検証します。`npm run test:integration`には家計の検証を含みます。Cloud Rulesはローカルと一致し、全15インデックスREADYです。finance-check（version 186199409d859a57、期限2026-10-28 13:34 JST）をpwa-checkへ公開しました。本番Hostingは変更していません。確認方法は[家計検証手順](./docs/finance-verification.md)、変更理由は[記録0018](./docs/implementation-log/0018-finance-records.md)を参照してください。
 
@@ -133,3 +133,9 @@ JDK 21とChromiumを用意し、`npm run test:integration`でRules・認証・�
 ローカル検証は`npm run test:finance`（家計/予算Rulesと2ブラウザー）、全回帰検証は`npm run test:integration`と`npm run test:pwa`を実行します。[予算確認手順](./docs/budget-verification.md)・[実装記録0019](./docs/implementation-log/0019-budgets.md)を参照してください。前項目はR1の合計更新修正も2026-10-22に本人確認済みです。
 
 budget-checkを[検証URL](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み（version 0e4cdcf8cf4a85f9、期限2026-10-29 09:20 JST）。143単体・全Emulator統合・PWA検証と公開匿名smokeが成功し、Rulesソース一致・全15索引READYを確認。本番Hostingは変更していません。2026-10-22にiPhone＋Macの案内①〜⑥「すべてok」と本人確認済みで、項目2は完了です。
+
+## 支払者・負担割合・精算（Phase 2・項目3）
+
+2人世帯の支出で支払者・負担割合・精算対象を設定できます。初期値は本人払い・折半、端数は支払者負担です。旧支出は未設定・対象外として保持します。家計の「精算」で月別の元の精算額と残額、全額/部分払い、確認付き取消、全期間の未精算月と相殺後差額を確認できます。精算金は実際の送金や収支への二重登録を行いません。支出を後から修正した場合も支払済み記録は残り、差額を再計算します。
+
+ローカル検証は`node scripts/run-emulators.mjs settlement`、全検証は`npm run check`・`npm run test:integration`・`npm run test:pwa`。詳細は[確認手順](./docs/settlement-verification.md)と[実装記録0020](./docs/implementation-log/0020-settlements.md)を参照してください。2026-10-23にiPhone＋Macの案内①〜⑥へ本人が「全て確認した」と回答し、項目3完了。次の家のルール管理へ自動では進みません。
