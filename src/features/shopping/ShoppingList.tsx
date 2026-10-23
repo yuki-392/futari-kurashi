@@ -8,9 +8,11 @@ import { useOnline } from '../tasks/useTasks'
 export function ShoppingList({
   tasks,
   onEdit,
+  onPurchase,
 }: {
   tasks: ShoppingItem[]
   onEdit?: (task: ShoppingItem) => void
+  onPurchase: (task: ShoppingItem) => void
 }) {
   const { uid, household } = useHousehold()
   const [deleting, setDeleting] = useState<ShoppingItem | null>(null),
@@ -87,7 +89,12 @@ export function ShoppingList({
                 disabled={busy}
                 className="task-primary"
                 aria-label={`${task.purchased ? '未購入に戻す' : '購入済みにする'}：${task.title}`}
-                onClick={() =>
+                onClick={() => {
+                  if (!task.purchased) {
+                    setDeleting(null)
+                    onPurchase(task)
+                    return
+                  }
                   void run(() =>
                     changeShopping(
                       household!.id,
@@ -97,10 +104,27 @@ export function ShoppingList({
                       household!.memberIds,
                     ),
                   )
-                }
+                }}
               >
                 {task.purchased ? '未購入に戻す' : '購入済みにする'}
               </button>
+              {task.expenseId ? (
+                <p className="text-sm">
+                  支出登録済み。家計と買い物は別々に管理します。支出削除後も再登録できません。
+                </p>
+              ) : task.purchased ? (
+                <button
+                  className="px-3 py-3 underline"
+                  disabled={busy}
+                  aria-label={`支出に登録：${task.title}`}
+                  onClick={() => {
+                    setDeleting(null)
+                    onPurchase(task)
+                  }}
+                >
+                  支出に登録
+                </button>
+              ) : null}
               {onEdit ? (
                 <>
                   <button
@@ -140,7 +164,8 @@ export function ShoppingList({
           className="mt-4 rounded-2xl border border-line bg-sage p-5"
         >
           <p className="break-words">
-            「{deleting.title}」を削除しますか？この操作は元に戻せません。
+            「{deleting.title}
+            」を削除しますか？この操作は元に戻せません。登録済みの支出は削除されません。
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <button

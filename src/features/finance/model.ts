@@ -49,6 +49,7 @@ export type FinanceEntryInput = {
 
 export type FinanceEntry = FinanceEntryInput & {
   id: string
+  shoppingItemId?: string
   version: number
   createdAt: unknown
   createdBy: string

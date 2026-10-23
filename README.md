@@ -147,3 +147,13 @@ budget-checkを[検証URL](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web
 `node scripts/run-emulators.mjs house-rules`で新機能のRulesと2ブラウザーを検証します。全検証は`npm run check`・`npm run test:integration`・`npm run test:pwa`。詳細は[確認手順](./docs/house-rules-verification.md)・[実装記録0021](./docs/implementation-log/0021-house-rules.md)を参照してください。2026-10-23に①〜⑥を本人確認済みで項目4完了。買い物と支出登録の連携へ自動では進みません。
 
 家のルール検証版house-rules-checkを[既存プレビュー](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み（期限2026-10-30 15:12 JST）。180単体・全統合/PWA・公開smoke成功。2026-10-23にiPhone＋Macでの本人確認済みです。
+
+## 買い物からの支出登録（Phase 2・項目5）
+
+購入だけ/支出も登録を選択し、購入後からも登録できます。予定予算から実額を推測せず、支払者と割合を確認します。1項目1回までで、登録後は買い物と家計を別々に編集・削除します。詳細は[確認手順](./docs/shopping-expense-verification.md)・[記録0022](./docs/implementation-log/0022-shopping-expenses.md)。本人確認は未実施です。
+
+連携版shopping-expense-checkを[既存プレビュー](https://futari-kurashi-5fcab9--pwa-check-uol8w76f.web.app)へ公開済み（期限2026-10-30 19:03 JST）。191単体・全統合/PWA・公開smoke成功。iPhone＋Macでの本人確認待ちです。
+
+2026-10-24: 連携の削除以外は本人確認済み。明細の削除確認へ自動移動する修正版shopping-expense-check-fix1を公開（期限2026-10-31 00:35 JST）、削除操作の再確認待ちです。[修正記録0023](./docs/implementation-log/0023-finance-delete-confirmation.md)。
+
+2026-10-24: 削除確認のR1修正版も本人が「確認完了」と回答。項目5とPhase 2全5項目は検証公開/本人確認まで完了しました。本番HostingはPhase 1版を維持し、Phase 2の本番反映は未実施です。

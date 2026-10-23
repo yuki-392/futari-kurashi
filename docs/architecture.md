@@ -222,3 +222,13 @@ households/{hid}/houseRules/{id}はtitle/body/categoryId/categoryName/reviewDate
 history/{version}へ操作後スナップショットを同じtransactionで作成し、Rulesは両方向のgetAfter照合で欠落・単独生成・改ざんを拒否する。編集/廃止/再開は表示時のversion、合意/取消は表示時のcontentVersionと現在状態を照合し、相手の合意を保持する。同時合意/初期化でSDKがpermission-deniedを返す場合だけ、最新を読み直す処理を最大3回実行する（abortedも対象）。権限条件は緩めず、古い内容への合意は再試行でも拒否する。
 
 現行/廃止とカテゴリはFirestoreクエリ条件、一覧はupdatedAt降順、カテゴリはcreatedAt昇順、履歴はsnapshot.version降順。各100件ずつ・最大10,000件+追加確認1件、取得上限はUIで明示。ルール用の複合索引2件を追加する。カテゴリ/履歴の既定の単一フィールド索引はそのまま利用し、永続キャッシュ・バックエンド・通知は追加しない。[実装記録0021](./implementation-log/0021-house-rules.md)・[確認手順](./house-rules-verification.md)を参照。
+
+## 買い物と支出登録の連携（Phase 2・項目5）
+
+買い物画面とホームから購入だけ/支出も登録を選び、購入済みの未登録商品は後からも登録できる。支出専用の既存FinanceFormを共有し、実額は空欄、日本時間の今日・商品名・有効な対応標準カテゴリを初期値とする。対応カテゴリがなければ本人の選択を求める。担当から支払者を推測せず、精算は既存の新規支出と同じ既定値を使う。画面離脱/認証/世帯変更で入力と購読を破棄し、同じフォームのカテゴリ失敗/再試行では入力を保持する。
+
+shoppingItems.expenseId、expenses.shoppingItemIdを任意追加。shoppingExpenseLinks/{shoppingId}はexpenseId/createdAt/createdByのみを持つ不変記録で、getのみ許可しlist/update/deleteを拒否する。作成時の買い物版・未登録と現在のカテゴリをtransactionで確認し、商品購入状態/支出/登録記録/必要な精算月をまとめて書き込む。RulesはgetAfterで相互参照し部分保存・重複を拒否する。リンク追加時の商品変更は購入状態とリンク/版/更新監査に限定する。旧文書は未連携、旧クライアントも通常のupdateではリンクを保持する。
+
+1項目からは1回のみ。未購入戻し/商品削除/支出削除でも登録記録は残る。登録後の編集/削除は独立し、支出削除後に登録し直すなら家計から手動入力する。永続キャッシュ・新規索引・バックエンドは追加しない。[記録0022](./implementation-log/0022-shopping-expenses.md)を参照。
+
+明細削除では確認欄へスクロールして確認ボタンへフォーカスを移し、取消で元の明細のボタンへ戻す。失敗理由は画面上部だけでなく確認欄内に表示する。長い一覧でも確認と結果が見えることをviewport/focusで検証する（[修正0023](./implementation-log/0023-finance-delete-confirmation.md)）。保存処理とRulesは維持する。

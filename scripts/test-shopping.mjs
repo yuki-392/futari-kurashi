@@ -182,6 +182,7 @@ try {
   await b
     .getByRole('button', { name: '購入済みにする：共有する牛乳', exact: true })
     .click()
+  await b.getByRole('button', { name: '購入だけ', exact: true }).click()
   await expect(b.getByText('共有する牛乳', { exact: true })).toHaveCount(0)
   await a.getByRole('button', { name: '購入済み', exact: true }).click()
   await expect(card(a, '共有する牛乳')).toBeVisible()
@@ -311,6 +312,7 @@ try {
       exact: true,
     })
     .click()
+  await b.getByRole('button', { name: '購入だけ', exact: true }).click()
   await expect(homeList(b).getByRole('listitem')).toHaveCount(5)
   await expect(
     homeList(b).getByText('更新後の優先品', { exact: true }),

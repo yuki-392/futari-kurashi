@@ -1,6 +1,6 @@
 import { SettlementPanel } from './SettlementPanel'
 import { BudgetPanel } from './BudgetPanel'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useHousehold } from '../household/context'
 import { useOnline } from '../tasks/useTasks'
 import { useTokyoDay } from '../tasks/useTokyoDay'
@@ -38,6 +38,17 @@ export function FinancePanel() {
   const [categoryName, setCategoryName] = useState('')
   const [categoryBusy, setCategoryBusy] = useState(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+  const deleteSection = useRef<HTMLElement>(null)
+  const deleteConfirm = useRef<HTMLButtonElement>(null)
+  const deleteSource = useRef<HTMLButtonElement | null>(null)
+  const deleteLock = useRef(false)
+  useEffect(() => {
+    if (deleting && view === 'entries') {
+      deleteConfirm.current?.focus({ preventScroll: true })
+      deleteSection.current?.scrollIntoView?.({ block: 'center' })
+    }
+  }, [deleting, view])
 
   const moveMonth = (amount: number) => {
     const [year, monthNumber] = month.split('-').map(Number)
@@ -328,6 +339,7 @@ export function FinancePanel() {
                         onClick={() => {
                           setEditing(entry)
                           setMessage('')
+                          setDeleting(null)
                           window.scrollTo(0, 0)
                         }}
                       >
@@ -335,7 +347,12 @@ export function FinancePanel() {
                       </button>
                       <button
                         className="rounded-xl border border-line px-3 py-2"
-                        onClick={() => setDeleting(entry)}
+                        onClick={(event) => {
+                          if (deleteLock.current) return
+                          deleteSource.current = event.currentTarget
+                          setDeleteError('')
+                          setDeleting(entry)
+                        }}
                       >
                         削除
                       </button>
@@ -356,27 +373,44 @@ export function FinancePanel() {
           </section>
           {deleting ? (
             <section
-              className="rounded-2xl border border-line bg-sage p-5"
+              ref={deleteSection}
+              className="scroll-mb-28 rounded-2xl border border-line bg-sage p-5"
               role="group"
               aria-label="削除の確認"
             >
               <p>
                 「{deleting.title}」を削除しますか？削除後は復元できません。
               </p>
-              <div className="mt-3 flex gap-2">
+              {deleteError ? (
+                <p role="alert" className="mt-3">
+                  {deleteError}
+                </p>
+              ) : null}
+              {deleting.shoppingItemId ? (
+                <p className="mt-3 text-sm">
+                  元の買い物は削除されません。支出を削除しても同じ買い物から再登録はできません。
+                </p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
+                  ref={deleteConfirm}
                   className="task-primary"
                   disabled={!online || deleteBusy}
                   onClick={() => {
-                    if (deleteBusy) return
+                    if (deleteLock.current) return
+                    deleteLock.current = true
+                    setDeleteError('')
                     setDeleteBusy(true)
                     void removeFinanceEntry(household!.id, deleting, uid)
                       .then(() => {
                         setDeleting(null)
                         setMessage('明細を削除しました。')
                       })
-                      .catch((error) => setMessage(financeMessage(error)))
-                      .finally(() => setDeleteBusy(false))
+                      .catch((error) => setDeleteError(financeMessage(error)))
+                      .finally(() => {
+                        deleteLock.current = false
+                        setDeleteBusy(false)
+                      })
                   }}
                 >
                   {deleteBusy ? '削除中…' : '削除する'}
@@ -384,7 +418,12 @@ export function FinancePanel() {
                 <button
                   className="rounded-xl border border-line px-4 py-3"
                   disabled={deleteBusy}
-                  onClick={() => setDeleting(null)}
+                  onClick={() => {
+                    setDeleting(null)
+                    setDeleteError('')
+                    if (deleteSource.current?.isConnected)
+                      deleteSource.current.focus()
+                  }}
                 >
                   キャンセル
                 </button>

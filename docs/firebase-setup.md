@@ -175,3 +175,13 @@ ruleCategories/houseRules/historyのRulesと、houseRulesのarchived+updatedAt�
 Emulator=false・house-rules-checkでビルドし、専用プロジェクトfutari-kurashi-5fcab9と--no-authorized-domainsを明示して既存pwa-checkへ7日間公開する。previewも既存のAuth/Firestoreを使用し、期限後もデータ・Rules・索引は保持される。本番Hostingや既存データを変更しない。[記録0021](./implementation-log/0021-house-rules.md)・[確認手順](./house-rules-verification.md)を参照。
 
 2026-10-23 15:12 JSTにhouse-rules-checkをpwa-checkへ公開（60a03104f133356e、期限2026-10-30 15:12:11 JST）。公開Ruleset fa25a871-d636-4e14-958d-d3d4075700edはソース完全一致、全17索引READY/定義一致、fieldOverrides=[]、請求先未接続、live da586cc22659f2a3維持を読み戻した。2026-10-23に案内①〜⑥を本人確認済みで項目4完了。今回の記録更新で追加デプロイは行っていない。
+
+## Phase 2・項目5: 買い物と支出登録
+
+現行Rules/17索引/課金/Hosting版を.tools.local/rules-backups/0022-beforeへ読み戻して保存し、必要なRulesのみ追加する。shoppingExpenseLinksは同世帯の単体取得と原子的作成だけを許可し、更新/削除/一覧を拒否。新規索引は追加しない。検証後、専用プロジェクトと--no-authorized-domainsを明示し、Emulator=false・shopping-expense-checkをpwa-checkへ7日間公開する。本番Hosting/既存データを維持し、プレビュー期限後も登録記録/支出/Rulesは残る。[記録0022](./implementation-log/0022-shopping-expenses.md)を参照。
+
+2026-10-23 19:03:35 JSTにshopping-expense-checkをpwa-checkへ公開（eba116f8dbefb060、期限2026-10-30 19:03:29 JST）。公開Ruleset 1c1a7f79-e538-45c1-8dc5-1c589f2cb709はソース完全一致。全17索引READY/定義一致・fieldOverrides=[]・請求先未接続・live da586cc22659f2a3維持を再確認。本人確認待ち。
+
+2026-10-24 00:35:21 JST: 明細削除確認のfix1をHostingプレビューだけ更新。shopping-expense-check-fix1 / d39bb948d40da1fb / 期限2026-10-31 00:35:15 JST。Rules・17索引・課金設定・本番liveは前後不変を確認し、既存データも変更していない。[記録0023](./implementation-log/0023-finance-delete-confirmation.md)。
+
+2026-10-24にfix1の①〜③を本人確認済み。項目5/Phase 2は検証公開・本人確認まで完了。今回の記録更新で再デプロイや設定変更を行わず、本番liveはPhase 1版のままです。

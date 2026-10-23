@@ -317,7 +317,8 @@ service cloud.firestore {
     }
     function validShopping(hid,data) {
       return data.keys().hasAll(['title','category','quantity','unit','budget','assigneeIds','priority','purchased','version','createdAt','createdBy','updatedAt','updatedBy'])
-        && data.keys().hasOnly(['title','category','quantity','unit','budget','assigneeIds','priority','purchased','version','createdAt','createdBy','updatedAt','updatedBy'])
+        && data.keys().hasOnly(['title','category','quantity','unit','budget','assigneeIds','priority','purchased','version','createdAt','createdBy','updatedAt','updatedBy','expenseId'])
+        && (!data.keys().hasAny(['expenseId']) || validPurchaseId(data.expenseId))
         && data.title is string && data.title == data.title.trim() && data.title.matches('(?s).{1,100}')
         && data.category in ['food','daily','furniture','appliances','other']
         && data.quantity is string && data.quantity != '0' && data.quantity.matches('^(0|[1-9][0-9]{0,5})([.][0-9]{0,2}[1-9])?$')
@@ -334,12 +335,49 @@ service cloud.firestore {
       allow get: if taskMember(hid);
       allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0;
       allow create: if taskMember(hid) && validShopping(hid,request.resource.data)
+        && !request.resource.data.keys().hasAny(['expenseId']) && !exists(purchaseLinkPath(hid,id))
         && request.resource.data.version == 1 && !request.resource.data.purchased
         && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
       allow update: if taskMember(hid) && validShopping(hid,request.resource.data)
+        && shoppingLinkChange(hid,id,resource.data,request.resource.data)
         && request.resource.data.version == resource.data.version + 1
         && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if taskMember(hid);
+    }
+    function validPurchaseId(id) { return id is string && id.matches('^[A-Za-z0-9_-]{1,128}$'); }
+    function purchaseLinkPath(hid,id) { return /databases/$(database)/documents/households/$(hid)/shoppingExpenseLinks/$(id); }
+    function purchaseItemPath(hid,id) { return /databases/$(database)/documents/households/$(hid)/shoppingItems/$(id); }
+    function purchaseExpensePath(hid,id) { return /databases/$(database)/documents/households/$(hid)/expenses/$(id); }
+    function shoppingLinkChange(hid,id,before,after) {
+      return before.keys().hasAny(['expenseId']) ? after.keys().hasAll(['expenseId']) && after.expenseId == before.expenseId
+        : !after.keys().hasAny(['expenseId']) || (
+          !exists(purchaseLinkPath(hid,id)) && getAfter(purchaseLinkPath(hid,id)).data.expenseId == after.expenseId
+          && after.purchased && after.diff(before).affectedKeys().hasOnly(['purchased','expenseId','version','updatedAt','updatedBy']));
+    }
+    function purchaseSourceUnchanged(before,after) {
+      return before.keys().hasAny(['shoppingItemId']) ? after.keys().hasAll(['shoppingItemId']) && after.shoppingItemId == before.shoppingItemId
+        : !after.keys().hasAny(['shoppingItemId']);
+    }
+    function expensePurchaseCreate(hid,id,data) {
+      return !data.keys().hasAny(['shoppingItemId']) || (
+        !exists(purchaseLinkPath(hid,data.shoppingItemId))
+        && getAfter(purchaseLinkPath(hid,data.shoppingItemId)).data.expenseId == id);
+    }
+    match /households/{hid}/shoppingExpenseLinks/{id} {
+      allow get: if taskMember(hid);
+      allow list,update,delete: if false;
+      allow create: if taskMember(hid) && validPurchaseId(id)
+        && request.resource.data.keys().hasAll(['expenseId','createdAt','createdBy'])
+        && request.resource.data.keys().hasOnly(['expenseId','createdAt','createdBy'])
+        && validPurchaseId(request.resource.data.expenseId)
+        && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid
+        && exists(purchaseItemPath(hid,id)) && !get(purchaseItemPath(hid,id)).data.keys().hasAny(['expenseId'])
+        && getAfter(purchaseItemPath(hid,id)).data.expenseId == request.resource.data.expenseId
+        && getAfter(purchaseItemPath(hid,id)).data.purchased
+        && getAfter(purchaseItemPath(hid,id)).data.version == get(purchaseItemPath(hid,id)).data.version + 1
+        && !exists(purchaseExpensePath(hid,request.resource.data.expenseId))
+        && getAfter(purchaseExpensePath(hid,request.resource.data.expenseId)).data.shoppingItemId == id
+        && getAfter(purchaseExpensePath(hid,request.resource.data.expenseId)).data.version == 1;
     }
     function validDeclutter(hid, data) {
       return data.keys().hasAll(['title','method','ownerIds','dueDate','sortDueDate','completed','completedAt','completedBy','version','createdAt','createdBy','updatedAt','updatedBy'])
@@ -407,7 +445,8 @@ service cloud.firestore {
     function validFinanceEntry(hid,data,allowArchived,oldCategoryId) {
       let category = get(financeCategoryPath(hid,data.categoryId)).data;
       return data.keys().hasAll(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy'])
-        && data.keys().hasOnly(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy','sharing'])
+        && data.keys().hasOnly(['type','title','amount','date','categoryId','memo','version','createdAt','createdBy','updatedAt','updatedBy','sharing','shoppingItemId'])
+        && (!data.keys().hasAny(['shoppingItemId']) || (data.type == 'expense' && validPurchaseId(data.shoppingItemId)))
         && validSharing(hid,data)
         && data.type in ['income','expense']
         && data.title is string && data.title == data.title.trim() && data.title.matches('(?s).{1,100}')
@@ -449,10 +488,12 @@ service cloud.firestore {
       allow list: if taskMember(hid) && request.query.limit is int && request.query.limit > 0 && request.query.limit <= 10000;
       allow create: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,false,null) && request.resource.data.type == 'expense'
         && expenseGuards(hid,id,{},request.resource.data)
+        && expensePurchaseCreate(hid,id,request.resource.data)
         && request.resource.data.version == 1 && request.resource.data.createdAt == request.time && request.resource.data.createdBy == request.auth.uid;
       allow update: if taskMember(hid) && validFinanceEntry(hid,request.resource.data,true,resource.data.categoryId) && request.resource.data.type == 'expense'
         && (!resource.data.keys().hasAny(['sharing']) || request.resource.data.keys().hasAll(['sharing']))
         && expenseGuards(hid,id,resource.data,request.resource.data)
+        && purchaseSourceUnchanged(resource.data,request.resource.data)
         && request.resource.data.version == resource.data.version + 1
         && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if taskMember(hid) && expenseGuards(hid,id,resource.data,{});

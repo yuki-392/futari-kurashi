@@ -18,6 +18,7 @@ export type ShoppingInput = {
 export type ShoppingItem = ShoppingInput & {
   id: string
   purchased: boolean
+  expenseId?: string
   version: number
   createdAt: unknown
   createdBy: string

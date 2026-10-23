@@ -17,7 +17,15 @@ export function FinanceForm({
   onCancel,
   members = [],
   uid = '',
+  defaults,
+  expenseOnly = false,
+  disabled = false,
+  submitLabel,
 }: {
+  defaults?: Partial<FinanceEntryInput>
+  expenseOnly?: boolean
+  disabled?: boolean
+  submitLabel?: string
   members?: string[]
   uid?: string
   categories: FinanceCategory[]
@@ -32,15 +40,17 @@ export function FinanceForm({
       category.type === type &&
       (!category.archived || category.id === entry?.categoryId),
   )
-  const [title, setTitle] = useState(entry?.title ?? '')
+  const [title, setTitle] = useState(entry?.title ?? defaults?.title ?? '')
   const [amount, setAmount] = useState(entry?.amount.toString() ?? '')
-  const [date, setDate] = useState(entry?.date ?? today)
+  const [date, setDate] = useState(entry?.date ?? defaults?.date ?? today)
   const [selectedCategoryId, setSelectedCategoryId] = useState(
-    entry?.categoryId ?? '',
+    entry?.categoryId ?? defaults?.categoryId ?? '',
   )
   const categoryId = available.some((item) => item.id === selectedCategoryId)
     ? selectedCategoryId
-    : (available[0]?.id ?? '')
+    : expenseOnly
+      ? ''
+      : (available[0]?.id ?? '')
   const [memo, setMemo] = useState(entry?.memo ?? '')
   const partner = members.find((id) => id !== uid) ?? ''
   const [included, setIncluded] = useState(
@@ -77,7 +87,7 @@ export function FinanceForm({
       className="space-y-4 rounded-2xl border border-line bg-white p-5"
       onSubmit={(event) => {
         event.preventDefault()
-        if (lock.current) return
+        if (lock.current || disabled) return
         if (
           type === 'expense' &&
           included &&
@@ -91,8 +101,16 @@ export function FinanceForm({
           return
         }
         const parsedAmount = Number(amount)
-        if (!Number.isSafeInteger(parsedAmount)) {
+        if (
+          !Number.isSafeInteger(parsedAmount) ||
+          parsedAmount < 1 ||
+          parsedAmount > 999999999
+        ) {
           setMessage('金額は1〜999999999円の整数で入力してください。')
+          return
+        }
+        if (!categoryId) {
+          setMessage('利用できる支出カテゴリを選んでください。')
           return
         }
         lock.current = true
@@ -129,20 +147,24 @@ export function FinanceForm({
           {message}
         </p>
       ) : null}
-      <fieldset disabled={busy} className="space-y-4">
-        <label className="block text-sm">
-          種別
-          <select
-            aria-label="種別"
-            className="task-input"
-            value={type}
-            disabled={Boolean(entry)}
-            onChange={(event) => setType(event.target.value as FinanceType)}
-          >
-            <option value="expense">支出</option>
-            <option value="income">収入</option>
-          </select>
-        </label>
+      <fieldset disabled={busy || disabled} className="space-y-4">
+        {!expenseOnly ? (
+          <label className="block text-sm">
+            種別
+            <select
+              aria-label="種別"
+              className="task-input"
+              value={type}
+              disabled={Boolean(entry)}
+              onChange={(event) => setType(event.target.value as FinanceType)}
+            >
+              <option value="expense">支出</option>
+              <option value="income">収入</option>
+            </select>
+          </label>
+        ) : (
+          <p className="text-sm">種別：支出</p>
+        )}
         <label className="block text-sm">
           内容
           <input
@@ -153,7 +175,9 @@ export function FinanceForm({
             onChange={(event) => setTitle(event.target.value)}
           />
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div
+          className={`grid gap-3 ${expenseOnly ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2'}`}
+        >
           <label className="block min-w-0 text-sm">
             金額（円）
             <input
@@ -180,10 +204,12 @@ export function FinanceForm({
         <label className="block text-sm">
           カテゴリ
           <select
+            aria-label="カテゴリ"
             className="task-input"
             value={categoryId}
             onChange={(event) => setSelectedCategoryId(event.target.value)}
           >
+            {expenseOnly ? <option value="">選択してください</option> : null}
             {available.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -219,6 +245,7 @@ export function FinanceForm({
                 <label className="block">
                   支払者
                   <select
+                    aria-label="支払者"
                     className="task-input"
                     value={payerId}
                     onChange={(e) => setPayerId(e.target.value)}
@@ -265,8 +292,13 @@ export function FinanceForm({
           />
         </label>
         <div className="flex flex-wrap gap-2">
-          <button className="task-primary" disabled={busy || !available.length}>
-            {busy ? '保存中…' : entry ? '保存する' : '登録する'}
+          <button
+            className="task-primary"
+            disabled={busy || disabled || !available.length}
+          >
+            {busy
+              ? '保存中…'
+              : (submitLabel ?? (entry ? '保存する' : '登録する'))}
           </button>
           {onCancel ? (
             <button

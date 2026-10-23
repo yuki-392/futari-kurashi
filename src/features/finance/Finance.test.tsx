@@ -239,3 +239,100 @@ it('カテゴリの追加、名称変更、アーカイブを実行する', asyn
     }),
   )
 })
+
+it('focuses deletion confirmation and returns focus on cancel without deleting', async () => {
+  render(ui(<FinancePanel />))
+  await act(async () => {})
+  act(() => publishCategories(cats))
+  act(() =>
+    publishEntries(
+      Array.from({ length: 20 }, (_, i) => ({
+        id: `delete-${i}`,
+        type: 'expense',
+        title: `削除候補${i}`,
+        amount: 101,
+        date: '2026-10-24',
+        categoryId: 'expense_food',
+        memo: '',
+        sharing: null,
+        version: 1,
+        createdAt: null,
+        createdBy: 'a',
+        updatedAt: null,
+        updatedBy: 'a',
+      })),
+    ),
+  )
+  const button = within(screen.getAllByRole('listitem')[0]!).getByRole(
+    'button',
+    { name: '削除' },
+  )
+  button.focus()
+  fireEvent.click(button)
+  const confirmation = screen.getByRole('group', { name: '削除の確認' })
+  expect(confirmation.contains(document.activeElement)).toBe(true)
+  expect(m.removeEntry).not.toHaveBeenCalled()
+  fireEvent.click(
+    within(confirmation).getByRole('button', {
+      name: 'キャンセル',
+    }),
+  )
+  expect(document.activeElement).toBe(button)
+  expect(m.removeEntry).not.toHaveBeenCalled()
+})
+
+it('keeps deletion errors inside confirmation, locks duplicate clicks and allows retry', async () => {
+  render(ui(<FinancePanel />))
+  await act(async () => {})
+  act(() => publishCategories(cats))
+  const entry: FinanceEntry = {
+    id: 'linked',
+    type: 'expense',
+    title: '連携明細',
+    amount: 101,
+    date: '2026-10-24',
+    categoryId: 'expense_food',
+    memo: '',
+    sharing: null,
+    shoppingItemId: 'shopping-1',
+    version: 2,
+    createdAt: null,
+    createdBy: 'a',
+    updatedAt: null,
+    updatedBy: 'a',
+  }
+  act(() => publishEntries([entry]))
+  fireEvent.click(
+    within(screen.getByRole('listitem')).getByRole('button', {
+      name: '削除',
+    }),
+  )
+  const confirmation = screen.getByRole('group', { name: '削除の確認' })
+  expect(confirmation.textContent).toContain('元の買い物は削除されません')
+  let reject: (e: Error) => void = () => {}
+  m.removeEntry.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, bad) => {
+        reject = bad
+      }),
+  )
+  const button = within(confirmation).getByRole('button', {
+    name: '削除する',
+  })
+  fireEvent.click(button)
+  fireEvent.click(button)
+  expect(m.removeEntry).toHaveBeenCalledTimes(1)
+  await act(async () => reject(new Error('通信失敗')))
+  expect(within(confirmation).getByRole('alert').textContent).toContain(
+    '通信失敗',
+  )
+  expect(screen.getByRole('listitem').textContent).toContain('連携明細')
+  fireEvent.click(
+    within(confirmation).getByRole('button', { name: '削除する' }),
+  )
+  await waitFor(() => expect(m.removeEntry).toHaveBeenCalledTimes(2))
+  expect(m.removeEntry.mock.lastCall).toEqual(['h', entry, 'a'])
+  await waitFor(() =>
+    expect(screen.queryByRole('group', { name: '削除の確認' })).toBeNull(),
+  )
+})

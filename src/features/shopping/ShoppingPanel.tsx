@@ -5,6 +5,7 @@ import { categories } from './model'
 import type { ShoppingItem, ShoppingInput } from './model'
 import { ShoppingForm } from './ShoppingForm'
 import { ShoppingList } from './ShoppingList'
+import { PurchaseFlow } from './PurchaseFlow'
 import { useShopping } from './useShopping'
 import { createShopping, changeShopping } from './service'
 function ListState({
@@ -43,10 +44,18 @@ export function ShoppingPanel() {
   const { uid, household } = useHousehold()
   const [purchased, setPurchased] = useState(false),
     [category, setCategory] = useState<ShoppingInput['category'] | ''>(''),
-    [editing, setEditing] = useState<ShoppingItem | null>(null)
+    [editing, setEditing] = useState<ShoppingItem | null>(null),
+    [purchase, setPurchase] = useState<ShoppingItem | null>(null)
   return (
     <div className="space-y-6">
       <Offline />
+      {purchase ? (
+        <PurchaseFlow
+          key={purchase.id}
+          item={purchase}
+          onClose={() => setPurchase(null)}
+        />
+      ) : null}
       <ShoppingForm
         key={editing ? `${editing.id}:${editing.version}` : 'new'}
         item={editing ?? undefined}
@@ -84,6 +93,7 @@ export function ShoppingPanel() {
               onClick={() => {
                 setPurchased(value)
                 setEditing(null)
+                setPurchase(null)
               }}
             >
               {value ? '購入済み' : '未購入'}
@@ -109,7 +119,12 @@ export function ShoppingPanel() {
           key={`${purchased}:${category}`}
           purchased={purchased}
           category={category}
+          onPurchase={(item) => {
+            setEditing(null)
+            setPurchase(item)
+          }}
           onEdit={(item) => {
+            setPurchase(null)
             setEditing(item)
             window.scrollTo(0, 0)
           }}
@@ -122,17 +137,23 @@ function ShoppingRecords({
   purchased,
   category,
   onEdit,
+  onPurchase,
 }: {
   purchased: boolean
   category: ShoppingInput['category'] | ''
   onEdit: (item: ShoppingItem) => void
+  onPurchase: (item: ShoppingItem) => void
 }) {
   const [count, setCount] = useState(100),
     list = useShopping({ purchased, count, ...(category ? { category } : {}) })
   return (
     <ListState status={list.status} retry={list.retry}>
       {list.items.length ? (
-        <ShoppingList tasks={list.items} onEdit={onEdit} />
+        <ShoppingList
+          tasks={list.items}
+          onEdit={onEdit}
+          onPurchase={onPurchase}
+        />
       ) : (
         <p>
           {purchased
@@ -152,6 +173,7 @@ function ShoppingRecords({
   )
 }
 export function HomeShopping() {
+  const [purchase, setPurchase] = useState<ShoppingItem | null>(null)
   const list = useShopping({ purchased: false, count: 5 })
   return (
     <section className="mt-8" aria-labelledby="home-shopping-title">
@@ -159,9 +181,16 @@ export function HomeShopping() {
         未購入の買い物
       </h2>
       <Offline />
+      {purchase ? (
+        <PurchaseFlow
+          key={purchase.id}
+          item={purchase}
+          onClose={() => setPurchase(null)}
+        />
+      ) : null}
       <ListState status={list.status} retry={list.retry}>
         {list.items.length ? (
-          <ShoppingList tasks={list.items} />
+          <ShoppingList tasks={list.items} onPurchase={setPurchase} />
         ) : (
           <p className="rounded-2xl bg-white p-5 text-sm">
             未購入の商品はありません。

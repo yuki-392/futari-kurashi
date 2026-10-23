@@ -124,6 +124,8 @@ it('購入と解除、商品名つき削除確認の取消と確定', async () =
   act(() => publish([item], false))
   expect(screen.getByText(/担当：相手/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '購入済みにする：牛乳' }))
+  expect(m.change).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '購入だけ' }))
   await waitFor(() => expect(m.change).toHaveBeenCalled())
   expect(m.change.mock.lastCall?.[3]).toEqual({ purchased: true })
   fireEvent.click(screen.getByRole('button', { name: '削除：牛乳' }))
@@ -202,4 +204,13 @@ it('保存待ちの間に別の商品を開いても、その下書きを閉じ�
   expect((screen.getByLabelText('商品名') as HTMLInputElement).value).toBe(
     '次の下書き',
   )
+})
+
+it('registered items disclose independent expense management and cannot register again', () => {
+  render(ui(<ShoppingPanel />))
+  act(() =>
+    publish([{ ...item, purchased: true, expenseId: 'expense-1' }], false),
+  )
+  expect(screen.getByText(/支出登録済み/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: '支出に登録：牛乳' })).toBeNull()
 })
